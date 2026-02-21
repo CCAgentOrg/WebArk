@@ -80,6 +80,22 @@ fly deploy
 | View-Source | `view-source` | ✅ |
 | ArchiveVN | `archivevn` | ✅ |
 
+## Privacy & Security
+
+| Aspect | Third-Party Archivers | ArchiveBox (Local) |
+|--------|----------------------|-------------------|
+| **URLs you archive** | Visible to 3rd party | Local only |
+| **Data retention** | Provider policy | Your policy |
+| **Network** | Internet-facing | Local/Tailscale |
+| **Censorship** | May block sensitive | You control |
+| **Cost** | May have limits | Free, unlimited |
+
+**Why self-host:**
+- Privacy: URLs you archive stay private
+- Control: No third-party retention
+- Reliability: Your own infrastructure
+- No rate limits (your server, your rules)
+
 ## Files
 
 ```
