@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="description" content="Archive web pages to multiple providers">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Archive Box">
+  <link rel="manifest" href="/manifest.json">
+  <title>🗄️ Archive Box</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    h1 { color: #58a6ff; border-bottom: 2px solid #30363d; padding-bottom: 10px; margin-bottom: 20px; }
+    textarea { width: 100%; padding: 16px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; font-size: 16px; min-height: 120px; }
+    textarea:focus { outline: none; border-color: #58a6ff; }
+    .btn { width: 100%; background: #238636; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+    .btn:hover { background: #2ea043; }
+    .summary, .url-group { background: #161b22; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #30363d; }
+    .original-url { color: #e3b341; word-break: break-all; margin-bottom: 12px; }
+    .archive-link { display: block; color: #58a6ff; text-decoration: none; padding: 8px 0; }
+    .loading { text-align: center; padding: 40px; }
+    .spinner { width: 40px; height: 40px; border: 3px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { background: #da3633; color: white; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🗄️ Archive Box</h1>
+    <textarea id="urls" placeholder="Enter URLs (one per line)"></textarea>
+    <button class="btn" onclick="archive()">Archive URLs</button>
+    <div id="results"></div>
+  </div>
+  <script>
+    async function archive() {
+      const urls = document.getElementById('urls').value.split('\n').map(u => u.trim()).filter(u => u);
+      if (!urls.length) return alert('Enter URLs');
+      
+      const btn = document.querySelector('.btn');
+      btn.disabled = true;
+      btn.textContent = 'Archiving...';
+      document.getElementById('results').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      
+      try {
+        const res = await fetch('/api/archive', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls }) });
+        const job = await res.json();
+        if (job.error) throw new Error(job.error);
+        pollStatus(job.id);
+      } catch (e) {
+        document.getElementById('results').innerHTML = '<div class="error">' + e.message + '</div>';
+        btn.disabled = false;
+        btn.textContent = 'Archive URLs';
+      }
+    }
+    
+    async function pollStatus(id) {
+      const check = async () => {
+        const res = await fetch('/api/archive/' + id);
+        const job = await res.json();
+        
+        if (job.status === 'completed') {
+          renderResults(job.results);
+          document.querySelector('.btn').disabled = false;
+          document.querySelector('.btn').textContent = 'Archive URLs';
+        } else if (job.status === 'failed') {
+          document.getElementById('results').innerHTML = '<div class="error">Job failed</div>';
+          document.querySelector('.btn').disabled = false;
+        } else {
+          setTimeout(check, 2000);
+        }
+      };
+      check();
+    }
+    
+    function renderResults(results) {
+      const successful = results.reduce((sum, r) => sum + (r.archives?.filter(a => a.status === 'success').length || 0), 0);
+      let html = '<div class="summary"><strong>' + results.length + '</strong> URLs → <strong>' + successful + '</strong> archives</div>';
+      
+      for (const r of results) {
+        html += '<div class="url-group"><div class="original-url">🌐 ' + r.original_url + '</div>';
+        for (const a of (r.archives || [])) {
+          if (a.status === 'success' && a.url) {
+            html += '<a href="' + a.url + '" class="archive-link" target="_blank">⬇ ' + a.provider + '</a>';
+          }
+        }
+        html += '</div>';
+      }
+      document.getElementById('results').innerHTML = html;
+    }
+    
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>

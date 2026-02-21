@@ -1,0 +1,11 @@
+{
+  "name": "archive-box",
+  "version": "1.0.0",
+  "description": "Multi-provider URL archiver with PWA and Telegram bot",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "bot": "node server.js --bot"
+  }
+}
