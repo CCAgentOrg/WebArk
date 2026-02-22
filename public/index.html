@@ -300,6 +300,33 @@
             <option value="nl">Nederlands</option>
             <option value="pl">Polski</option>
             <option value="tr">Türkçe</option>
+            <option value="sv">Svenska</option>
+            <option value="da">Dansk</option>
+            <option value="fi">Suomi</option>
+            <option value="no">Norsk</option>
+            <option value="cs">Čeština</option>
+            <option value="el">Ελληνικά</option>
+            <option value="he">עברית</option>
+            <option value="hu">Magyar</option>
+            <option value="id">Bahasa Indonesia</option>
+            <option value="ms">Bahasa Melayu</option>
+            <option value="ro">Română</option>
+            <option value="sk">Slovenčina</option>
+            <option value="uk">Українська</option>
+            <option value="bg">Български</option>
+            <option value="ca">Català</option>
+            <option value="hr">Hrvatski</option>
+            <option value="et">Eesti</option>
+            <option value="lv">Latviešu</option>
+            <option value="lt">Lietuvių</option>
+            <option value="sr">Српски</option>
+            <option value="sl">Slovenščina</option>
+            <option value="tl">Filipino</option>
+            <option value="fa">فارسی</option>
+            <option value="mr">मराठी</option>
+            <option value="ne">नेपाली</option>
+            <option value="sw">Kiswahili</option>
+            <option value="af">Afrikaans</option>
           </select>
         </div>
       </div>
@@ -1633,6 +1660,27 @@
       document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         el.placeholder = t(key);
+      });
+      
+      // Translate tab buttons
+      const tabs = document.querySelectorAll('.tab-btn');
+      if (tabs[0]) tabs[0].textContent = t('about');
+      if (tabs[1]) tabs[1].textContent = t('archive');
+      if (tabs[2]) tabs[2].textContent = t('crawl');
+      if (tabs[3]) tabs[3].textContent = t('history');
+      if (tabs[4]) tabs[4].textContent = t('settings');
+      
+      // Translate provider buttons
+      document.querySelectorAll('.provider-btn').forEach(btn => {
+        const provider = btn.dataset.provider;
+        if (provider === 'wayback') btn.textContent = 'Wayback';
+        else if (provider === 'archiveis') btn.textContent = 'archive.is';
+        else if (provider === 'archiveph') btn.textContent = 'archive.ph';
+        else if (provider === 'ghostarchive') btn.textContent = 'Ghost';
+        else if (provider === 'archivevn') btn.textContent = 'ArchiveVN';
+        else if (provider === 'textise') btn.textContent = 'Textise';
+        else if (provider === 'memento') btn.textContent = 'Memento';
+        else if (provider === 'local') btn.textContent = '📱 Local';
       });
     }
     
