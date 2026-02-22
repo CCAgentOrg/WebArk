@@ -54,6 +54,11 @@
     .stat { background: #21262d; padding: 12px 16px; border-radius: 6px; text-align: center; }
     .stat-num { font-size: 24px; font-weight: bold; color: #58a6ff; }
     .stat-label { font-size: 12px; color: #8b949e; }
+    .about-section { margin-bottom: 20px; }
+    .about-section h3 { color: #58a6ff; margin-bottom: 8px; }
+    .feature-list { list-style: none; padding: 0; }
+    .feature-list li { padding: 8px 0; border-bottom: 1px solid #30363d; }
+    .feature-list li:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
@@ -61,9 +66,88 @@
     <h1>🗄️ WebArk</h1>
     
     <div class="tab-buttons">
+      <button class="tab-btn" onclick="switchTab('about')">About</button>
       <button class="tab-btn active" onclick="switchTab('archive')">Archive</button>
       <button class="tab-btn" onclick="switchTab('status')">Check Status</button>
-      <button class="tab-btn" onclick="switchTab('crawl')">Crawl & Archive</button>
+      <button class="tab-btn" onclick="switchTab('crawl')">Crawl</button>
+    </div>
+    
+    <!-- About Tab -->
+    <div id="tab-about" class="hidden">
+      <div class="summary">
+        <h2 style="color:#58a6ff;margin-top:0;">🗄️ WebArk</h2>
+        <p>A privacy-first, serverless web archiver. Archive pages to multiple providers directly from your browser.</p>
+        <p style="margin-top:12px;color:#8b949e;">No server needed • No tracking • Works offline via PWA</p>
+      </div>
+      
+      <h2>✨ Features</h2>
+      <div class="url-group">
+        <p><strong>📦 Archive to Multiple Providers</strong><br><span style="color:#8b949e;">Wayback Machine, archive.is, archive.ph</span></p>
+      </div>
+      <div class="url-group">
+        <p><strong>🔍 Check Archive Status</strong><br><span style="color:#8b949e;">See which providers have archived a page</span></p>
+      </div>
+      <div class="url-group">
+        <p><strong>🕷️ Crawl & Archive</strong><br><span style="color:#8b949e;">Find and archive entire sites (1-2 levels deep)</span></p>
+      </div>
+      <div class="url-group">
+        <p><strong>📱 Install as App</strong><br><span style="color:#8b949e;">PWA - works offline, add to home screen</span></p>
+      </div>
+      <div class="url-group">
+        <p><strong>🔒 Privacy First</strong><br><span style="color:#8b949e;">All archiving happens in your browser. No data stored on any server.</span></p>
+      </div>
+      
+      <h2>📖 How to Use</h2>
+      <div class="url-group">
+        <p style="margin-bottom:12px;"><strong>1. Archive URLs</strong></p>
+        <ul style="color:#8b949e;padding-left:20px;margin:0;">
+          <li>Enter URLs (one per line)</li>
+          <li>Select provider (Wayback is default)</li>
+          <li>Click "Archive URLs"</li>
+          <li>Each archive page opens in a new tab</li>
+        </ul>
+      </div>
+      <div class="url-group">
+        <p style="margin-bottom:12px;"><strong>2. Check Status</strong></p>
+        <ul style="color:#8b949e;padding-left:20px;margin:0;">
+          <li>Enter a URL</li>
+          <li>Click "Check Archive Status"</li>
+          <li>See which providers have it archived</li>
+          <li>One-click archive if not yet archived</li>
+        </ul>
+      </div>
+      <div class="url-group">
+        <p style="margin-bottom:12px;"><strong>3. Crawl & Archive</strong></p>
+        <ul style="color:#8b949e;padding-left:20px;margin:0;">
+          <li>Enter a page URL</li>
+          <li>Choose depth: 1 level (single page) or 2 levels (same domain)</li>
+          <li>Click "Check Status First" to see what needs archiving</li>
+          <li>Click "Archive All" to archive all found links</li>
+        </ul>
+      </div>
+      
+      <h2>🔧 Install</h2>
+      <div class="url-group">
+        <p><strong>Chrome/Edge:</strong> Settings → Install WebArk</p>
+        <p><strong>Safari:</strong> Share → Add to Home Screen</p>
+        <p><strong>Firefox:</strong> Menu → Add to PWA</p>
+      </div>
+      
+      <h2>🌐 Providers</h2>
+      <div class="url-group">
+        <p><strong>Wayback Machine</strong> - archive.org<br><span style="color:#8b949e;font-size:12px;">The oldest & most reliable. 50B+ pages.</span></p>
+      </div>
+      <div class="url-group">
+        <p><strong>archive.is</strong> - archive.is<br><span style="color:#8b949e;font-size:12px;">Independent, privacy-focused.</span></p>
+      </div>
+      <div class="url-group">
+        <p><strong>archive.ph</strong> - archive.ph<br><span style="color:#8b949e;font-size:12;">Simple, fast archiving.</span></p>
+      </div>
+      
+      <h2>📁 Source Code</h2>
+      <div class="url-group">
+        <p><a href="https://github.com/CCAgentOrg/WebArk" target="_blank" style="color:#58a6ff;">github.com/CCAgentOrg/WebArk</a></p>
+      </div>
     </div>
     
     <!-- Archive Tab -->
