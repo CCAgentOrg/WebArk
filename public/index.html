@@ -169,6 +169,9 @@
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
           <input type="checkbox" id="include-external" checked> Include external links
         </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="skip-top-sites" checked> Skip top sites (Wikipedia, GitHub, etc.)
+        </label>
       </div>
       
       <div class="providers">
@@ -274,6 +277,46 @@
   
   <script>
     // ============ CONFIG ============
+    // Top sites that are already well-archived - skip by default
+    const TOP_SITES = [
+      'wikipedia.org', 'wikimedia.org', 'wiktionary.org', 'wikibooks.org', 'wikidata.org',
+      'github.com', 'github.io', 'gitlab.com',
+      'twitter.com', 'x.com', 't.co',
+      'facebook.com', 'fb.com', 'instagram.com', 'threads.net',
+      'youtube.com', 'youtu.be', 'yewtu.be',
+      'reddit.com', 'old.reddit.com', 'redd.it',
+      'linkedin.com',
+      'medium.com', 'substack.com',
+      'stackoverflow.com', 'stackexchange.com',
+      'news.ycombinator.com',
+      'nytimes.com', 'theguardian.com', 'bbc.com', 'bbc.co.uk', 'reuters.com', 'apnews.com',
+      'cnn.com', 'foxnews.com', 'washingtonpost.com',
+      'amazon.com', 'amazon.co.uk', 'amazon.de',
+      'google.com', 'google.co.in', 'google.co.uk', 'google.de',
+      'microsoft.com', 'apple.com', 'apple.co',
+      'reddit.com', 'discord.com', 'slack.com',
+      'cloudflare.com', 'fastly.com',
+      'letsencrypt.org', 'cacert.org',
+      'archive.org', 'web.archive.org',
+      'creativecommons.org', 'gnu.org', 'fsf.org',
+      'w3.org', 'ietf.org', 'mdn.io',
+      'npmjs.com', 'pypi.org', 'rubygems.org', 'crates.io',
+      'wordpress.com', 'blogspot.com', 'tumblr.com',
+      'youtu.be', 'vimeo.com', 'dailymotion.com',
+      'dropbox.com', 'drive.google.com', 'onedrive.live.com',
+      'zoom.us', 'meet.google.com',
+      'bit.ly', 'tinyurl.com', 'goo.gl', 'ow.ly', 't.co',
+      'feedburner.com', 'feeds.feedburner.com'
+    ];
+    
+    // Check if domain should be skipped
+    function shouldSkipDomain(url) {
+      try {
+        const domain = new URL(url).hostname.toLowerCase();
+        return TOP_SITES.some(site => domain === site || domain.endsWith('.' + site));
+      } catch { return false; }
+    }
+    
     const providers = {
       wayback: {
         name: 'Wayback Machine',
@@ -589,6 +632,7 @@
       
       const baseUrl = new URL(url);
       const includeExternal = document.getElementById('include-external').checked;
+      const skipTopSites = document.getElementById('skip-top-sites')?.checked ?? true;
       
       // Always add the base URL first
       const links = new Map();
@@ -611,7 +655,7 @@
                 const linkUrl = new URL(normalized);
                 const isInternal = linkUrl.hostname === baseUrl.hostname;
                 
-                if ((isInternal || includeExternal) && !normalized.match(/\.(jpg|png|gif|css|js|woff|svg|pdf|zip)$/i)) {
+                if ((isInternal || includeExternal) && !normalized.match(/\.(jpg|png|gif|css|js|woff|svg|pdf|zip)$/i) && !(skipTopSites && shouldSkipDomain(normalized))) {
                   if (!links.has(normalized)) {
                     links.set(normalized, { url: normalized, internal: isInternal, status: 'unknown' });
                   }
@@ -651,7 +695,7 @@
                   const linkUrl = new URL(normalized);
                   const isInternal = linkUrl.hostname === baseUrl.hostname;
                   
-                  if ((isInternal || includeExternal) && !links.has(normalized)) {
+                  if ((isInternal || includeExternal) && !links.has(normalized) && !(skipTopSites && shouldSkipDomain(normalized))) {
                     links.set(normalized, { url: normalized, internal: isInternal, status: 'unknown' });
                   }
                 } catch {}
