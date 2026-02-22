@@ -1265,6 +1265,10 @@
       applyTranslations();
     }
     
+    function changeLanguage(lang) {
+      setLanguage(lang);
+    }
+    
     function applyTranslations() {
       // Apply translations to elements with data-i18n attribute
       document.querySelectorAll('[data-i18n]').forEach(el => {
