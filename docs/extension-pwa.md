@@ -48,6 +48,52 @@
 4. archive.ph
 5. Perma.cc (if key configured)
 
+### Wayback Extension Feature Parity
+
+| Feature | Status |
+|---------|--------|
+| One-click archive | ✅ |
+| Auto-archive on page close | ✅ |
+| View all snapshots | ✅ |
+| Compare snapshots | ✅ |
+| Search archive.org | ✅ |
+| Bookmarks import | ✅ |
+| Multiple providers | ✅ (our edge) |
+| Bulk archive | ✅ |
+| Scheduled archive | 🔲 |
+
+### AI Features (Optional)
+
+**Page Summarization:**
+- Summarize page content using local LLM (Ollama) or cloud API
+- Use PicoRouter for privacy-preserving summarization
+
+**Smart Archiving:**
+- AI decides when to archive (changes detected)
+- Extract key information automatically
+
+**Implementation:**
+```js
+// Summarize via PicoRouter (local)
+async function summarize(html) {
+  const text = extractText(html);
+  const response = await fetch('http://localhost:8080/v1/chat/completions', {
+    method: 'POST',
+    body: {
+      model: 'llama3',
+      messages: [{
+        role: 'system',
+        content: 'Summarize this web page in 3 bullets:'
+      }, {
+        role: 'user',
+        content: text
+      }]
+    }
+  });
+  return response.choices[0].message.content;
+}
+```
+
 ### 2. Local PWA
 
 **Permissions:**
