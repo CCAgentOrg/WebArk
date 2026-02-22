@@ -1,117 +1,124 @@
-# 🗄️ Archive Box
+# 🗄️ WebArk
 
-Multi-provider URL archiver with PWA and Telegram bot. Optimized for 256MB deployment.
+A privacy-first, serverless web archiver. Archive pages to multiple providers directly from your browser - no server required.
+
+**Live:** https://ccagentorg.github.io/WebArk/
 
 ## Features
 
-- **11 Archive Providers**: Wayback, archive.is, ghostarchive, archive.ph, CC0, Shivers, Perma.cc, Textise, Memento, View-Source, ArchiveVN
+- **7 Archive Providers**: Wayback Machine, archive.is, archive.ph, Ghostarchive, ArchiveVN, Textise, Memento
+- **Check Status**: See which providers have a page archived
+- **Crawl & Archive**: Find and archive pages at 1-2 depth levels
+- **Background Mode**: Archive without opening popups (via API)
+- **Skip Top Sites**: Automatically skip Wikipedia, GitHub, etc.
+- **History**: Track your archiving activity
 - **PWA**: Installable web app, works offline
-- **Telegram Bot**: Deploy and use via Telegram
-- **API**: RESTful API for integrations
-- **256MB Optimized**: Minimal deps, lean Node.js
+- **Serverless**: Runs entirely in the browser
 
 ## Quick Start
 
+### Live Version
+Just open: https://ccagentorg.github.io/WebArk/
+
+### Local Development
 ```bash
 # Install
 npm install
 
-# Run server
+# Run server (optional - works without server)
 node server.js
 
-# With Telegram bot
-TELEGRAM_BOT_TOKEN=xxx node server.js --bot
+# Run tests
+npm test
 ```
 
 ## Usage
 
-### Web (PWA)
-1. Open http://localhost:3000
-2. Enter URLs
+### Archive URLs
+1. Enter URLs (one per line)
+2. Select provider
 3. Click "Archive URLs"
 
-### Telegram
-1. Get token from @BotFather
-2. Start bot: `TELEGRAM_BOT_TOKEN=xxx node server.js --bot`
-3. Send URLs to bot
+### Check Status
+1. Enter a URL
+2. Click "Check Archive Status"
+3. See which providers have it archived
 
-### API
+### Crawl & Archive
+1. Enter a page URL
+2. Set depth (1 level = single page, 2 levels = site-wide)
+3. Click "Find Links" to discover pages
+4. Click "Check Status" to see what's archived
+5. Click "Archive All" or "Archive Unarchived"
 
-```bash
-# Create job
-curl -X POST http://localhost:3000/api/archive \
-  -H "Content-Type: application/json" \
-  -d '{"urls":["https://example.com"]}'
+## Settings
 
-# Get result
-curl http://localhost:3000/api/archive/{job-id}
-```
-
-## Deploy to Fly.io
-
-```bash
-# Build
-docker build -t archive-box .
-
-# Run
-docker run -p 3000:8080 -e TELEGRAM_BOT_TOKEN=xxx archive-box
-```
-
-Or use Fly.io CLI:
-```bash
-fly launch
-fly secrets set TELEGRAM_BOT_TOKEN=xxx
-fly deploy
-```
+- **Default Provider**: Provider selected by default
+- **Default Depth**: Crawl depth (1 or 2 levels)
+- **Auto-check Status**: Automatically check when finding links
+- **Background Mode**: Archive without popups (where supported)
+- **Rate Limit**: Delay between requests (ms)
 
 ## Providers
 
-| Provider | Key | Status |
-|----------|-----|--------|
-| Wayback Machine | `wayback` | ✅ |
-| archive.is | `archive.is` | ✅ |
-| ghostarchive | `ghostarchive` | ✅ |
-| archive.ph | `archive.ph` | ✅ |
-| CC0 Archive | `cc0` | ✅ |
-| Shivers | `shivers` | ✅ |
-| Perma.cc | `perma` | ⚠️ Auth |
-| Textise | `textise` | ✅ |
-| Memento | `memento` | ✅ |
-| View-Source | `view-source` | ✅ |
-| ArchiveVN | `archivevn` | ✅ |
+| Provider | Background Mode | Check Status |
+|----------|-----------------|--------------|
+| Wayback Machine | ✅ | ✅ |
+| archive.is | ✅ | ✅ |
+| archive.ph | ✅ | ✅ |
+| Ghostarchive | ✅ | ✅ |
+| ArchiveVN | ✅ | ✅ |
+| Textise | ✅ | ✅ |
+| Memento | ❌ (read-only) | ✅ |
 
-## Privacy & Security
+## Browser Extension
 
-| Aspect | Third-Party Archivers | ArchiveBox (Local) |
-|--------|----------------------|-------------------|
-| **URLs you archive** | Visible to 3rd party | Local only |
-| **Data retention** | Provider policy | Your policy |
-| **Network** | Internet-facing | Local/Tailscale |
-| **Censorship** | May block sensitive | You control |
-| **Cost** | May have limits | Free, unlimited |
+Build a browser extension from the `extension/` folder:
 
-**Why self-host:**
-- Privacy: URLs you archive stay private
-- Control: No third-party retention
-- Reliability: Your own infrastructure
-- No rate limits (your server, your rules)
+```bash
+npm run build
+# Creates dist/webark-extension.zip
+```
 
-## Files
+Load as unpacked extension in Chrome/Edge.
+
+## Architecture
 
 ```
-archive-box/
-├── server.js      # Main server (API + PWA + Bot)
-├── public/        # PWA static files
-│   ├── index.html
+webark/
+├── public/              # PWA (served by GitHub Pages or any static host)
+│   ├── index.html       # Main app
+│   ├── manifest.json    # PWA manifest
+│   └── sw.js           # Service worker
+├── extension/           # Browser extension
 │   ├── manifest.json
-│   └── sw.js
-├── Dockerfile     # Deploy to Fly.io
-├── test.mjs       # Tests
-└── README.md
+│   └── lib/
+├── server.js            # Optional Node.js server (for Telegram bot)
+└── tests/              # Unit tests
 ```
+
+## Privacy
+
+| Aspect | Third-Party Services | WebArk (Browser) |
+|--------|---------------------|------------------|
+| **URLs you archive** | Visible to provider | Local only |
+| **Data storage** | Provider's servers | Your browser |
+| **Network** | Through providers | Direct to providers |
+| **Account** | May require | None needed |
+
+**Why WebArk:**
+- Privacy: Runs entirely in your browser
+- No account required
+- No server to deploy (GitHub Pages)
+- No rate limits from us
 
 ## Testing
 
 ```bash
 npm test
+# Runs: storage, archivers, links, providers tests
 ```
+
+## License
+
+MIT
