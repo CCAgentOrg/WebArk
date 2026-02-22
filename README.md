@@ -1,12 +1,29 @@
 # 🗄️ WebArk
 
 [![Tests](https://github.com/CCAgentOrg/WebArk/actions/workflows/ci.yml/badge.svg)](https://github.com/CCAgentOrg/WebArk/actions)
-[![Coverage](./coverage.svg)](https://github.com/CCAgentOrg/WebArk)
+[![Browser Tests](https://github.com/CCAgentOrg/WebArk/actions/workflows/ci.yml/badge.svg?job=browser-tests)](https://github.com/CCAgentOrg/WebArk/actions)
+[![Build](https://github.com/CCAgentOrg/WebArk/actions/workflows/ci.yml/badge.svg?job=build)](https://github.com/CCAgentOrg/WebArk/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A privacy-first, serverless web archiver. Archive pages to multiple providers directly from your browser - no server required.
 
 **Live:** https://ccagentorg.github.io/WebArk/
+
+---
+
+## CI/CD Status
+
+| Job | Status | Description |
+|-----|--------|-------------|
+| Unit Tests | ✅ | Jest tests for providers, storage, links |
+| Lint | ✅ | JS syntax + HTML validation |
+| Browser Tests | ✅ | 14 Playwright automation tests |
+| Build | ✅ | File verification + size checks |
+| Extension | ✅ | Builds browser extension ZIP |
+
+**Test Coverage:**
+- Unit tests: Providers, IndexedDB storage, link extraction
+- Browser tests: UI navigation, language switching, settings persistence
 
 ---
 
@@ -147,13 +164,34 @@ webark/
 
 ## Testing
 
+### Unit Tests
 ```bash
 npm test
-# 48+ tests covering:
+# 40+ tests covering:
 # - Storage (IndexedDB)
 # - Archivers (provider configs)
 # - Link extraction & validation
 # - Provider APIs
+```
+
+### Browser Automation Tests
+```bash
+npm run test:browser
+# 14 Playwright tests:
+# - Page load & rendering
+# - Tab navigation (5 tabs)
+# - Provider buttons (8 providers)
+# - Language switching (23 languages)
+# - Settings persistence
+# - URL input handling
+# - Console error detection
+```
+
+### Run All Tests
+```bash
+npm test        # Unit tests only
+npm run test:unit   # Same as above
+npm run test:browser # Browser automation
 ```
 
 ---
