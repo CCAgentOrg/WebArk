@@ -249,6 +249,14 @@
         
         <div class="settings-row">
           <div>
+            <div class="settings-label">Background Mode</div>
+            <div class="settings-desc">Archive without opening popups (where supported)</div>
+          </div>
+          <input type="checkbox" id="setting-background" onchange="saveSettings()">
+        </div>
+        
+        <div class="settings-row">
+          <div>
             <div class="settings-label">Rate Limit (ms)</div>
             <div class="settings-desc">Delay between archive requests</div>
           </div>
@@ -270,6 +278,19 @@
       wayback: {
         name: 'Wayback Machine',
         archiveUrl: (u) => `https://web.archive.org/save/${u}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch('https://web.archive.org/save/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `url=${encodeURIComponent(url)}`
+            });
+            const jobUrl = res.url || `https://web.archive.org/web/*/${url}`;
+            return { success: true, archivedUrl: jobUrl };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
         checkArchived: async (url) => {
           try {
             const res = await fetch(`https://archive.org/wayback/available?url=${encodeURIComponent(url)}`);
@@ -281,6 +302,19 @@
       archiveis: {
         name: 'archive.is',
         archiveUrl: (u) => `https://archive.is/submit/?url=${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch('https://archive.is/submit/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `url=${encodeURIComponent(url)}`
+            });
+            const jobUrl = res.url || `https://archive.is/${encodeURIComponent(url)}`;
+            return { success: true, archivedUrl: jobUrl };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
         checkArchived: async (url) => {
           try {
             const res = await fetch(`https://archive.is/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
@@ -294,6 +328,19 @@
       archiveph: {
         name: 'archive.ph',
         archiveUrl: (u) => `https://archive.ph/submit/?url=${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch('https://archive.ph/submit/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `url=${encodeURIComponent(url)}`
+            });
+            const jobUrl = res.url || `https://archive.ph/${encodeURIComponent(url)}`;
+            return { success: true, archivedUrl: jobUrl };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
         checkArchived: async (url) => {
           try {
             const res = await fetch(`https://archive.ph/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
@@ -307,6 +354,14 @@
       ghostarchive: {
         name: 'Ghostarchive',
         archiveUrl: (u) => `https://ghostarchive.org/archive?url=${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch(`https://ghostarchive.org/archive?url=${encodeURIComponent(url)}`);
+            return { success: res.ok, archivedUrl: res.url };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
         checkArchived: async (url) => {
           try {
             const res = await fetch(`https://ghostarchive.org/archive?url=${encodeURIComponent(url)}`);
@@ -318,6 +373,19 @@
       archivevn: {
         name: 'ArchiveVN',
         archiveUrl: (u) => `https://archive.vn/submit/?url=${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch('https://archive.vn/submit/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `url=${encodeURIComponent(url)}`
+            });
+            const jobUrl = res.url || `https://archive.vn/${encodeURIComponent(url)}`;
+            return { success: true, archivedUrl: jobUrl };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
         checkArchived: async (url) => {
           try {
             const res = await fetch(`https://archive.vn/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
@@ -331,17 +399,32 @@
       textise: {
         name: 'Textise',
         archiveUrl: (u) => `https://r.jina.ai/http://${u.replace(/^https?:\/\//, '')}`,
+        backgroundArchive: async (url) => {
+          try {
+            const textUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`;
+            const res = await fetch(textUrl);
+            if (res.ok) {
+              return { success: true, archivedUrl: textUrl };
+            }
+            return { success: false, error: 'Failed to fetch' };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
         checkArchived: async (url) => {
           try {
             const res = await fetch(`https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`);
             if (res.ok) return `https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`;
             return null;
- (res.ok)          } catch { return null; }
+          } catch { return null; }
         }
       },
       memento: {
         name: 'Memento',
         archiveUrl: (u) => `https://timetravel.mementoweb.org/list/${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          return { success: false, error: 'Memento is read-only' };
+        },
         checkArchived: async (url) => {
           try {
             const res = await fetch(`https://timetravel.mementoweb.org/api/json/list/${encodeURIComponent(url)}`);
@@ -372,12 +455,14 @@
         provider: 'wayback',
         depth: 2,
         autoCheck: false,
+        backgroundMode: true,
         rateLimit: 500
       };
       
       document.getElementById('setting-provider').value = settings.provider;
       document.getElementById('setting-depth').value = settings.depth;
       document.getElementById('setting-autocheck').checked = settings.autoCheck;
+      document.getElementById('setting-background').checked = settings.backgroundMode;
       document.getElementById('setting-rate').value = settings.rateLimit;
       
       selectedProvider = settings.provider;
@@ -397,6 +482,7 @@
         provider: document.getElementById('setting-provider').value,
         depth: parseInt(document.getElementById('setting-depth').value),
         autoCheck: document.getElementById('setting-autocheck').checked,
+        backgroundMode: document.getElementById('setting-background').checked,
         rateLimit: parseInt(document.getElementById('setting-rate').value)
       };
       localStorage.setItem('webark-settings', JSON.stringify(settings));
@@ -438,25 +524,47 @@
     }
     
     // ============ ARCHIVE ============
-    function archive() {
+    async function archive() {
       const urls = document.getElementById('urls').value.split('\n').map(u => u.trim()).filter(u => u);
       if (!urls.length) return alert('Enter URLs');
       
       const provider = providers[selectedProvider];
       const resultsDiv = document.getElementById('archive-results');
-      resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Opening archive pages...</div>';
+      const useBackground = settings.backgroundMode && provider.backgroundArchive;
       
-      let opened = 0;
-      for (const url of urls) {
-        window.open(provider.archiveUrl(url), '_blank');
-        addToHistory(url, 'archive', selectedProvider);
-        opened++;
-        // Rate limit
-        const rate = parseInt(document.getElementById('setting-rate')?.value || 500);
-        setTimeout(() => {}, rate);
+      if (useBackground) {
+        resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Archiving in background...</div>';
+        
+        let success = 0;
+        let failed = 0;
+        const rate = settings.rateLimit || 500;
+        
+        for (const url of urls) {
+          const result = await provider.backgroundArchive(url);
+          if (result.success) {
+            success++;
+            addToHistory(url, 'archive', selectedProvider);
+          } else {
+            failed++;
+          }
+          await new Promise(r => setTimeout(r, rate));
+        }
+        
+        resultsDiv.innerHTML = `<div class="success">Archived ${success} URL(s)${failed > 0 ? ', ' + failed + ' failed' : ''}</div>`;
+      } else {
+        // Fallback to popups
+        resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Opening archive pages...</div>';
+        
+        let opened = 0;
+        for (const url of urls) {
+          window.open(provider.archiveUrl(url), '_blank');
+          addToHistory(url, 'archive', selectedProvider);
+          opened++;
+          await new Promise(r => setTimeout(r, settings.rateLimit || 500));
+        }
+        
+        resultsDiv.innerHTML = '<div class="success">Opened ' + opened + ' archive pages!</div>';
       }
-      
-      resultsDiv.innerHTML = '<div class="success">Opened ' + opened + ' archive pages!</div>';
     }
     
     function clearResults() {
@@ -690,52 +798,103 @@
       `;
     }
     
-    function archiveAll() {
+    async function archiveAll() {
       const provider = providers[selectedProvider];
-      const rate = parseInt(document.getElementById('setting-rate')?.value || 500);
+      const useBackground = settings.backgroundMode && provider.backgroundArchive;
+      const rate = settings.rateLimit || 500;
       
-      crawlLinks.forEach((link, i) => {
-        setTimeout(() => {
-          window.open(provider.archiveUrl(link.url), '_blank');
-          addToHistory(link.url, 'archive', selectedProvider);
-        }, i * rate);
-      });
-      
-      document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + crawlLinks.length + ' archive pages!</div>';
+      if (useBackground) {
+        document.getElementById('crawl-results').innerHTML = '<div class="loading"><div class="spinner"></div>Archiving...</div>';
+        
+        let success = 0;
+        for (const link of crawlLinks) {
+          const result = await provider.backgroundArchive(link.url);
+          if (result.success) {
+            success++;
+            addToHistory(link.url, 'archive', selectedProvider);
+          }
+          await new Promise(r => setTimeout(r, rate));
+        }
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Archived ' + success + ' URLs!</div>';
+      } else {
+        crawlLinks.forEach((link, i) => {
+          setTimeout(() => {
+            window.open(provider.archiveUrl(link.url), '_blank');
+            addToHistory(link.url, 'archive', selectedProvider);
+          }, i * rate);
+        });
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + crawlLinks.length + ' archive pages!</div>';
+      }
     }
     
-    function archiveUnarchived() {
+    async function archiveUnarchived() {
       const unarchived = crawlLinks.filter(l => l.status !== 'archived');
       const provider = providers[selectedProvider];
-      const rate = parseInt(document.getElementById('setting-rate')?.value || 500);
+      const useBackground = settings.backgroundMode && provider.backgroundArchive;
+      const rate = settings.rateLimit || 500;
       
-      unarchived.forEach((link, i) => {
-        setTimeout(() => {
-          window.open(provider.archiveUrl(link.url), '_blank');
-          addToHistory(link.url, 'archive', selectedProvider);
-        }, i * rate);
-      });
-      
-      document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + unarchived.length + +' archive pages!</div>';
+      if (useBackground) {
+        document.getElementById('crawl-results').innerHTML = '<div class="loading"><div class="spinner"></div>Archiving...</div>';
+        
+        let success = 0;
+        for (const link of unarchived) {
+          const result = await provider.backgroundArchive(link.url);
+          if (result.success) {
+            success++;
+            addToHistory(link.url, 'archive', selectedProvider);
+          }
+          await new Promise(r => setTimeout(r, rate));
+        }
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Archived ' + success + ' URLs!</div>';
+      } else {
+        unarchived.forEach((link, i) => {
+          setTimeout(() => {
+            window.open(provider.archiveUrl(link.url), '_blank');
+            addToHistory(link.url, 'archive', selectedProvider);
+          }, i * rate);
+        });
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + unarchived.length + ' archive pages!</div>';
+      }
     }
     
-    function archiveSelected() {
+    async function archiveSelected() {
       const checkboxes = document.querySelectorAll('.link-checkbox:checked');
       const selected = Array.from(checkboxes).map(cb => decodeURIComponent(cb.dataset.url));
       
       if (selected.length === 0) return alert('Select links to archive');
       
       const provider = providers[selectedProvider];
-      const rate = parseInt(document.getElementById('setting-rate')?.value || 500);
+      const useBackground = settings.backgroundMode && provider.backgroundArchive;
+      const rate = settings.rateLimit || 500;
       
-      selected.forEach((url, i) => {
-        setTimeout(() => {
-          window.open(provider.archiveUrl(url), '_blank');
-          addToHistory(url, 'archive', selectedProvider);
-        }, i * rate);
-      });
-      
-      document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + selected.length + ' archive pages!</div>';
+      if (useBackground) {
+        document.getElementById('crawl-results').innerHTML = '<div class="loading"><div class="spinner"></div>Archiving...</div>';
+        
+        let success = 0;
+        for (const url of selected) {
+          const result = await provider.backgroundArchive(url);
+          if (result.success) {
+            success++;
+            addToHistory(url, 'archive', selectedProvider);
+          }
+          await new Promise(r => setTimeout(r, rate));
+        }
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Archived ' + success + ' URLs!</div>';
+      } else {
+        selected.forEach((url, i) => {
+          setTimeout(() => {
+            window.open(provider.archiveUrl(url), '_blank');
+            addToHistory(url, 'archive', selectedProvider);
+          }, i * rate);
+        });
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + selected.length + ' archive pages!</div>';
+      }
     }
     
     // ============ HISTORY ============
