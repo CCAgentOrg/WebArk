@@ -1,16 +1,7 @@
 // Browser Automation Tests for WebArk
 // Uses Playwright for end-to-end testing
 
-let chromium;
-try {
-  // Dynamic import for ESM
-  const playwrightModule = await import('playwright');
-  chromium = playwrightModule.chromium;
-} catch (e) {
-  console.log('⚠️ Playwright not available, skipping browser tests');
-  console.log('Install with: npx playwright install');
-  process.exit(0);
-}
+import { chromium } from 'playwright';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3456';
 
@@ -21,6 +12,7 @@ async function runTests() {
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
+  
   const context = await browser.newContext();
   const page = await context.newPage();
   
@@ -93,10 +85,8 @@ async function runTests() {
   // Test 8: Can select a language
   await test('Can change language', async () => {
     await page.selectOption('#setting-lang', 'ta');
-    // Check if Tamil translations are applied (tab buttons should change)
     const archiveBtn = page.locator('.tab-btn').nth(1);
     const text = await archiveBtn.textContent();
-    // Should be Tamil for Archive tab
     assert(text.includes('ஆவண') || text === 'Archive', 'Language should change');
   });
   
@@ -134,18 +124,15 @@ async function runTests() {
   await test('Settings can be saved', async () => {
     await page.click('.tab-btn:has-text("Settings")');
     await page.selectOption('#setting-provider', 'archiveph');
-    // Trigger save by changing another setting
     await page.fill('#setting-rate', '1000');
-    // Wait a bit for localStorage
     await page.waitForTimeout(100);
-    // Navigate away and back
     await page.click('.tab-btn:has-text("Archive")');
     await page.click('.tab-btn:has-text("Settings")');
     const value = await page.inputValue('#setting-rate');
     assert(value === '1000', 'Settings should persist');
   });
   
-  // Test 14: Check for console errors
+  // Test 14: No critical console errors
   await test('No critical console errors', async () => {
     const errors = [];
     page.on('console', msg => {
@@ -155,7 +142,6 @@ async function runTests() {
     });
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
-    // Filter out expected/known errors
     const criticalErrors = errors.filter(e => 
       !e.includes('favicon') && 
       !e.includes('404') &&
