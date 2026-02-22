@@ -78,17 +78,18 @@ jobs:
         run: npm ci
       
       - name: Install Playwright browsers
-        run: npx playwright install chromium
+        run: npx playwright install --with-deps chromium
       
-      - name: Start server and run tests
+      - name: Run browser tests
         run: |
-          echo "Working directory: $(pwd)"
-          ls -la tests/
+          npm install
+          npx playwright install chromium
           npx serve public -l 3456 &
-          sleep 5
+          sleep 8
           node tests/browser.mjs
         env:
           BASE_URL: http://localhost:3456
+          CI: true
 
   # Build
   build:
