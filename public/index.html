@@ -13,20 +13,22 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; }
+    .container { max-width: 800px; margin: 0 auto; }
     h1 { color: #58a6ff; border-bottom: 2px solid #30363d; padding-bottom: 10px; margin-bottom: 20px; }
     h2 { color: #8b949e; font-size: 14px; margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 1px; }
-    textarea, input[type="text"] { width: 100%; padding: 16px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; font-size: 16px; }
-    textarea { min-height: 100px; }
-    textarea:focus, input:focus { outline: none; border-color: #58a6ff; }
-    .btn { background: #238636; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    textarea, input[type="text"], input[type="number"], select { width: 100%; padding: 12px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; font-size: 14px; }
+    textarea { min-height: 80px; }
+    textarea:focus, input:focus, select:focus { outline: none; border-color: #58a6ff; }
+    .btn { background: #238636; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
     .btn:hover { background: #2ea043; }
     .btn-secondary { background: #30363d; }
     .btn-secondary:hover { background: #484f58; }
-    .btn-small { padding: 8px 12px; font-size: 12px; }
+    .btn-small { padding: 6px 10px; font-size: 12px; }
+    .btn-danger { background: #da3633; }
+    .btn-danger:hover { background: #f85149; }
     .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
     .summary, .url-group, .status-card { background: #161b22; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #30363d; }
-    .original-url { color: #e3b341; word-break: break-all; margin-bottom: 12px; }
+    .original-url { color: #e3b341; word-break: break-all; }
     .archive-link { display: block; color: #58a6ff; text-decoration: none; padding: 6px 0; }
     .archive-link:hover { text-decoration: underline; }
     .loading { text-align: center; padding: 40px; }
@@ -42,23 +44,47 @@
     .status-archived { background: #238636; }
     .status-not-archived { background: #da3633; }
     .status-unknown { background: #d29922; }
-    .link-list { max-height: 300px; overflow-y: auto; }
-    .link-item { padding: 8px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+    .status-checking { background: #58a6ff; animation: pulse 1s infinite; }
+    @keyframes pulse { 50% { opacity: 0.5; } }
+    .link-list { max-height: 400px; overflow-y: auto; }
+    .link-item { padding: 10px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .link-item:last-child { border-bottom: none; }
-    .link-url { color: #8b949e; font-size: 12px; word-break: break-all; }
-    .tab-buttons { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab-btn { flex: 1; padding: 12px; background: #21262d; border: 1px solid #30363d; color: #8b949e; border-radius: 8px; cursor: pointer; text-align: center; }
+    .link-url { color: #8b949e; font-size: 13px; word-break: break-all; flex: 1; }
+    .link-external { color: #f78166; }
+    .link-internal { color: #58a6ff; }
+    .tab-buttons { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab-btn { flex: 1; min-width: 70px; padding: 10px 8px; background: #21262d; border: 1px solid #30363d; color: #8b949e; border-radius: 6px; cursor: pointer; text-align: center; font-size: 13px; }
     .tab-btn.active { background: #388bfd; color: white; border-color: #388bfd; }
     .hidden { display: none; }
-    .stats { display: flex; gap: 16px; margin-bottom: 12px; }
-    .stat { background: #21262d; padding: 12px 16px; border-radius: 6px; text-align: center; }
-    .stat-num { font-size: 24px; font-weight: bold; color: #58a6ff; }
-    .stat-label { font-size: 12px; color: #8b949e; }
-    .about-section { margin-bottom: 20px; }
-    .about-section h3 { color: #58a6ff; margin-bottom: 8px; }
-    .feature-list { list-style: none; padding: 0; }
-    .feature-list li { padding: 8px 0; border-bottom: 1px solid #30363d; }
-    .feature-list li:last-child { border-bottom: none; }
+    .stats { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .stat { background: #21262d; padding: 10px 14px; border-radius: 6px; text-align: center; }
+    .stat-num { font-size: 20px; font-weight: bold; color: #58a6ff; }
+    .stat-label { font-size: 11px; color: #8b949e; }
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #30363d; }
+    th { background: #21262d; color: #8b949e; font-weight: 600; font-size: 12px; }
+    td { background: #161b22; }
+    tr:hover td { background: #21262d; }
+    .checkbox-cell { width: 30px; }
+    .url-cell { max-width: 300px; word-break: break-all; }
+    .checkbox { width: 18px; height: 18px; cursor: pointer; }
+    .select-all-btn { font-size: 11px; padding: 4px 8px; }
+    .history-item { padding: 12px; border-bottom: 1px solid #30363d; }
+    .history-item:last-child { border-bottom: none; }
+    .history-url { color: #e3b341; font-size: 13px; word-break: break-all; }
+    .history-meta { color: #8b949e; font-size: 11px; margin-top: 4px; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #30363d; }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-label { font-weight: 600; }
+    .settings-desc { color: #8b949e; font-size: 12px; }
+    .depth-btn { flex: 1; }
+    .depth-btn.active { background: #388bfd; color: white; border-color: #388bfd; }
+    .action-bar { position: sticky; bottom: 0; background: #0d1117; padding: 12px 0; border-top: 1px solid #30363d; margin-top: 16px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .badge-success { background: #238636; }
+    .badge-error { background: #da3633; }
+    .badge-warning { background: #d29922; color: #0d1117; }
   </style>
 </head>
 <body>
@@ -68,8 +94,9 @@
     <div class="tab-buttons">
       <button class="tab-btn" onclick="switchTab('about')">About</button>
       <button class="tab-btn active" onclick="switchTab('archive')">Archive</button>
-      <button class="tab-btn" onclick="switchTab('status')">Check Status</button>
       <button class="tab-btn" onclick="switchTab('crawl')">Crawl</button>
+      <button class="tab-btn" onclick="switchTab('history')">History</button>
+      <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
     </div>
     
     <!-- About Tab -->
@@ -77,74 +104,32 @@
       <div class="summary">
         <h2 style="color:#58a6ff;margin-top:0;">🗄️ WebArk</h2>
         <p>A privacy-first, serverless web archiver. Archive pages to multiple providers directly from your browser.</p>
-        <p style="margin-top:12px;color:#8b949e;">No server needed • No tracking • Works offline via PWA</p>
+        <p style="margin-top:12px;color:#8b949e;">No server • No tracking • Works offline via PWA</p>
       </div>
       
-      <h2>✨ Features</h2>
+      <h2>Features</h2>
       <div class="url-group">
-        <p><strong>📦 Archive to Multiple Providers</strong><br><span style="color:#8b949e;">Wayback Machine, archive.is, archive.ph</span></p>
-      </div>
-      <div class="url-group">
-        <p><strong>🔍 Check Archive Status</strong><br><span style="color:#8b949e;">See which providers have archived a page</span></p>
-      </div>
-      <div class="url-group">
-        <p><strong>🕷️ Crawl & Archive</strong><br><span style="color:#8b949e;">Find and archive entire sites (1-2 levels deep)</span></p>
-      </div>
-      <div class="url-group">
-        <p><strong>📱 Install as App</strong><br><span style="color:#8b949e;">PWA - works offline, add to home screen</span></p>
-      </div>
-      <div class="url-group">
-        <p><strong>🔒 Privacy First</strong><br><span style="color:#8b949e;">All archiving happens in your browser. No data stored on any server.</span></p>
+        <p><strong>📦 Archive</strong> - Save URLs to Wayback, archive.is, archive.ph</p>
+        <p><strong>🔍 Check Status</strong> - See which providers have a page archived</p>
+        <p><strong>🕷️ Crawl</strong> - Find & archive pages at 1-2 depth levels</p>
+        <p><strong>📜 History</strong> - Track your archiving activity</p>
+        <p><strong>📱 PWA</strong> - Install as app, works offline</p>
       </div>
       
-      <h2>📖 How to Use</h2>
+      <h2>How to Use</h2>
       <div class="url-group">
-        <p style="margin-bottom:12px;"><strong>1. Archive URLs</strong></p>
-        <ul style="color:#8b949e;padding-left:20px;margin:0;">
-          <li>Enter URLs (one per line)</li>
-          <li>Select provider (Wayback is default)</li>
-          <li>Click "Archive URLs"</li>
-          <li>Each archive page opens in a new tab</li>
-        </ul>
-      </div>
-      <div class="url-group">
-        <p style="margin-bottom:12px;"><strong>2. Check Status</strong></p>
-        <ul style="color:#8b949e;padding-left:20px;margin:0;">
-          <li>Enter a URL</li>
-          <li>Click "Check Archive Status"</li>
-          <li>See which providers have it archived</li>
-          <li>One-click archive if not yet archived</li>
-        </ul>
-      </div>
-      <div class="url-group">
-        <p style="margin-bottom:12px;"><strong>3. Crawl & Archive</strong></p>
-        <ul style="color:#8b949e;padding-left:20px;margin:0;">
-          <li>Enter a page URL</li>
-          <li>Choose depth: 1 level (single page) or 2 levels (same domain)</li>
-          <li>Click "Check Status First" to see what needs archiving</li>
-          <li>Click "Archive All" to archive all found links</li>
-        </ul>
+        <p><strong>Archive:</strong> Enter URLs → Select provider → Click Archive</p>
+        <p><strong>Crawl:</strong> Enter URL → Set depth → Click "Find Links" → Check status → Archive</p>
       </div>
       
-      <h2>🔧 Install</h2>
+      <h2>Install</h2>
       <div class="url-group">
-        <p><strong>Chrome/Edge:</strong> Settings → Install WebArk</p>
-        <p><strong>Safari:</strong> Share → Add to Home Screen</p>
-        <p><strong>Firefox:</strong> Menu → Add to PWA</p>
+        <p>Chrome: ⋮ → Install WebArk</p>
+        <p>Safari: Share → Add to Home Screen</p>
+        <p>Firefox: ⋯ → Add to PWA</p>
       </div>
       
-      <h2>🌐 Providers</h2>
-      <div class="url-group">
-        <p><strong>Wayback Machine</strong> - archive.org<br><span style="color:#8b949e;font-size:12px;">The oldest & most reliable. 50B+ pages.</span></p>
-      </div>
-      <div class="url-group">
-        <p><strong>archive.is</strong> - archive.is<br><span style="color:#8b949e;font-size:12px;">Independent, privacy-focused.</span></p>
-      </div>
-      <div class="url-group">
-        <p><strong>archive.ph</strong> - archive.ph<br><span style="color:#8b949e;font-size:12;">Simple, fast archiving.</span></p>
-      </div>
-      
-      <h2>📁 Source Code</h2>
+      <h2>Source</h2>
       <div class="url-group">
         <p><a href="https://github.com/CCAgentOrg/WebArk" target="_blank" style="color:#58a6ff;">github.com/CCAgentOrg/WebArk</a></p>
       </div>
@@ -162,35 +147,106 @@
         <button class="btn" onclick="archive()">Archive URLs</button>
         <button class="btn btn-secondary" onclick="clearResults()">Clear</button>
       </div>
-    </div>
-    
-    <!-- Status Tab -->
-    <div id="tab-status" class="hidden">
-      <input type="text" id="status-url" placeholder="Enter URL to check...">
-      <div class="btn-group">
-        <button class="btn" onclick="checkStatus()">Check Archive Status</button>
-      </div>
-      <div id="status-results"></div>
+      <div id="archive-results"></div>
     </div>
     
     <!-- Crawl Tab -->
     <div id="tab-crawl" class="hidden">
       <input type="text" id="crawl-url" placeholder="Enter page URL to crawl...">
+      
+      <h2>Depth</h2>
+      <div class="btn-group">
+        <button class="btn btn-secondary depth-btn" onclick="setDepth(1)" id="depth-1">1 Level (Page)</button>
+        <button class="btn btn-secondary depth-btn active" onclick="setDepth(2)" id="depth-2">2 Levels (Site)</button>
+      </div>
+      
+      <h2>Options</h2>
+      <div class="btn-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="include-external" checked> Include external links
+        </label>
+      </div>
+      
       <div class="providers">
         <button class="provider-btn active" data-provider="wayback">Wayback</button>
         <button class="provider-btn" data-provider="archiveis">archive.is</button>
         <button class="provider-btn" data-provider="archiveph">archive.ph</button>
       </div>
-      <h2>Crawl Depth</h2>
+      
       <div class="btn-group">
-        <button class="btn btn-secondary" onclick="setDepth(1)">1 Level (Same Page)</button>
-        <button class="btn btn-secondary" onclick="setDepth(2)">2 Levels (Same Domain)</button>
+        <button class="btn" onclick="findLinks()">🔍 Find Links</button>
+        <button class="btn btn-secondary" onclick="checkAllStatus()">✅ Check Status</button>
       </div>
-      <div class="btn-group">
-        <button class="btn" onclick="crawlAndArchive()">Crawl & Archive All</button>
-        <button class="btn btn-secondary" onclick="checkCrawlStatus()">Check Status First</button>
+      
+      <div id="crawl-stats" class="hidden">
+        <div class="stats" id="crawl-stats-inner"></div>
       </div>
+      
       <div id="crawl-results"></div>
+      
+      <div id="crawl-action-bar" class="action-bar hidden">
+        <div class="btn-group">
+          <button class="btn" onclick="archiveSelected()">📦 Archive Selected</button>
+          <button class="btn btn-secondary" onclick="archiveUnarchived()">📦 Archive Unarchived</button>
+          <button class="btn btn-secondary" onclick="archiveAll()">📦 Archive All</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- History Tab -->
+    <div id="tab-history" class="hidden">
+      <div class="btn-group">
+        <button class="btn btn-secondary btn-small" onclick="clearHistory()">Clear History</button>
+      </div>
+      <div id="history-list"></div>
+    </div>
+    
+    <!-- Settings Tab -->
+    <div id="tab-settings" class="hidden">
+      <div class="url-group">
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Default Provider</div>
+            <div class="settings-desc">Provider selected by default</div>
+          </div>
+          <select id="setting-provider" style="width:150px;" onchange="saveSettings()">
+            <option value="wayback">Wayback</option>
+            <option value="archiveis">archive.is</option>
+            <option value="archiveph">archive.ph</option>
+          </select>
+        </div>
+        
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Default Depth</div>
+            <div class="settings-desc">Crawl depth default</div>
+          </div>
+          <select id="setting-depth" style="width:150px;" onchange="saveSettings()">
+            <option value="1">1 Level</option>
+            <option value="2">2 Levels</option>
+          </select>
+        </div>
+        
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Auto-check Status</div>
+            <div class="settings-desc">Automatically check when finding links</div>
+          </div>
+          <input type="checkbox" id="setting-autocheck" onchange="saveSettings()">
+        </div>
+        
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Rate Limit (ms)</div>
+            <div class="settings-desc">Delay between archive requests</div>
+          </div>
+          <input type="number" id="setting-rate" value="500" min="100" max="5000" style="width:100px;" onchange="saveSettings()">
+        </div>
+      </div>
+      
+      <div class="btn-group" style="margin-top:20px;">
+        <button class="btn btn-danger" onclick="resetSettings()">Reset to Defaults</button>
+      </div>
     </div>
     
     <div id="results"></div>
@@ -201,7 +257,6 @@
     const providers = {
       wayback: {
         name: 'Wayback Machine',
-        statusUrl: (u) => `https://archive.org/wayback/available?url=${encodeURIComponent(u)}`,
         archiveUrl: (u) => `https://web.archive.org/save/${u}`,
         checkArchived: async (url) => {
           try {
@@ -213,44 +268,100 @@
       },
       archiveis: {
         name: 'archive.is',
-        statusUrl: (u) => `https://archive.is/${encodeURIComponent(u)}`,
         archiveUrl: (u) => `https://archive.is/submit/?url=${encodeURIComponent(u)}`,
         checkArchived: async (url) => {
           try {
-            const res = await fetch(`https://archive.is/${encodeURIComponent(url)}`);
-            if (res.redirected || res.url.includes('archive.is/')) {
-              return res.url;
+            const res = await fetch(`https://archive.is/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
+            if (res.type === 'opaqueredirect' || res.status === 302) {
+              return `https://archive.is/${encodeURIComponent(url)}`;
             }
-          } catch {}
-          return null;
+            return null;
+          } catch { return null; }
         }
       },
       archiveph: {
         name: 'archive.ph',
-        statusUrl: (u) => `https://archive.ph/${encodeURIComponent(u)}`,
         archiveUrl: (u) => `https://archive.ph/submit/?url=${encodeURIComponent(u)}`,
         checkArchived: async (url) => {
           try {
-            const res = await fetch(`https://archive.ph/${encodeURIComponent(url)}`);
-            if (res.redirected || res.url.includes('archive.ph/')) {
-              return res.url;
+            const res = await fetch(`https://archive.ph/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
+            if (res.type === 'opaqueredirect' || res.status === 302) {
+              return `https://archive.ph/${encodeURIComponent(url)}`;
             }
-          } catch {}
-          return null;
+            return null;
+          } catch { return null; }
         }
       }
     };
     
+    // ============ STATE ============
     let selectedProvider = 'wayback';
-    let crawlDepth = 1;
-    let crawledLinks = [];
+    let crawlDepth = 2;
+    let crawlLinks = [];
+    let settings = {};
+    
+    // ============ INIT ============
+    function init() {
+      loadSettings();
+      loadHistory();
+      restoreTab();
+    }
+    
+    function loadSettings() {
+      const saved = localStorage.getItem('webark-settings');
+      settings = saved ? JSON.parse(saved) : {
+        provider: 'wayback',
+        depth: 2,
+        autoCheck: false,
+        rateLimit: 500
+      };
+      
+      document.getElementById('setting-provider').value = settings.provider;
+      document.getElementById('setting-depth').value = settings.depth;
+      document.getElementById('setting-autocheck').checked = settings.autoCheck;
+      document.getElementById('setting-rate').value = settings.rateLimit;
+      
+      selectedProvider = settings.provider;
+      crawlDepth = settings.depth;
+      
+      // Update UI
+      document.querySelectorAll('.provider-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.provider === selectedProvider);
+      });
+      document.querySelectorAll('.depth-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === 'depth-' + crawlDepth);
+      });
+    }
+    
+    function saveSettings() {
+      settings = {
+        provider: document.getElementById('setting-provider').value,
+        depth: parseInt(document.getElementById('setting-depth').value),
+        autoCheck: document.getElementById('setting-autocheck').checked,
+        rateLimit: parseInt(document.getElementById('setting-rate').value)
+      };
+      localStorage.setItem('webark-settings', JSON.stringify(settings));
+    }
+    
+    function resetSettings() {
+      localStorage.removeItem('webark-settings');
+      loadSettings();
+    }
     
     // ============ UI ============
     function switchTab(tab) {
+      localStorage.setItem('webark-last-tab', tab);
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('[id^="tab-"]').forEach(d => d.classList.add('hidden'));
-      event.target.classList.add('active');
+      event?.target?.classList.add('active');
       document.getElementById('tab-' + tab).classList.remove('hidden');
+      
+      if (tab === 'history') loadHistory();
+    }
+    
+    function restoreTab() {
+      const last = localStorage.getItem('webark-last-tab') || 'archive';
+      document.querySelector(`[onclick="switchTab('${last}')"]`)?.click();
     }
     
     document.querySelectorAll('.provider-btn').forEach(btn => {
@@ -263,9 +374,8 @@
     
     function setDepth(depth) {
       crawlDepth = depth;
-      event.target.classList.add('active');
-      event.target.nextElementSibling?.classList.remove('active');
-      event.target.previousElementSibling?.classList.remove('active');
+      document.querySelectorAll('.depth-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('depth-' + depth).classList.add('active');
     }
     
     // ============ ARCHIVE ============
@@ -273,271 +383,314 @@
       const urls = document.getElementById('urls').value.split('\n').map(u => u.trim()).filter(u => u);
       if (!urls.length) return alert('Enter URLs');
       
-      const btn = document.querySelector('#tab-archive .btn');
-      btn.disabled = true;
-      btn.textContent = 'Opening...';
-      
       const provider = providers[selectedProvider];
+      const resultsDiv = document.getElementById('archive-results');
+      resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Opening archive pages...</div>';
       
+      let opened = 0;
       for (const url of urls) {
-        try {
-          window.open(provider.archiveUrl(url), '_blank');
-        } catch (e) {
-          console.error('Error:', url, e);
-        }
+        window.open(provider.archiveUrl(url), '_blank');
+        addToHistory(url, 'archive', selectedProvider);
+        opened++;
+        // Rate limit
+        const rate = parseInt(document.getElementById('setting-rate')?.value || 500);
+        setTimeout(() => {}, rate);
       }
       
-      renderResults(urls, provider.name);
-      btn.disabled = false;
-      btn.textContent = 'Archive URLs';
-    }
-    
-    function renderResults(urls, providerName) {
-      let html = '<div class="summary"><strong>' + urls.length + '</strong> URLs sent to <strong>' + providerName + '</strong></div>';
-      
-      for (const url of urls) {
-        const provider = providers[selectedProvider];
-        html += '<div class="url-group"><div class="original-url">🌐 ' + url + '</div>';
-        html += '<a href="' + provider.archiveUrl(url) + '" class="archive-link" target="_blank">⬇ ' + providerName + '</a>';
-        html += '</div>';
-      }
-      
-      document.getElementById('results').innerHTML = html;
+      resultsDiv.innerHTML = '<div class="success">Opened ' + opened + ' archive pages!</div>';
     }
     
     function clearResults() {
       document.getElementById('urls').value = '';
-      document.getElementById('results').innerHTML = '';
+      document.getElementById('archive-results').innerHTML = '';
     }
     
-    // ============ STATUS CHECK ============
-    async function checkStatus() {
-      const url = document.getElementById('status-url').value.trim();
+    // ============ CRAWL ============
+    async function findLinks() {
+      const url = document.getElementById('crawl-url').value.trim();
       if (!url) return alert('Enter a URL');
       
-      const resultsDiv = document.getElementById('status-results');
-      resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Checking...</div>';
+      const resultsDiv = document.getElementById('crawl-results');
+      resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Finding links...</div>';
       
-      let html = '<div class="status-card"><div class="original-url">🌐 ' + url + '</div>';
+      let links = new Map();
+      const baseUrl = new URL(url);
+      const includeExternal = document.getElementById('include-external').checked;
       
-      for (const [key, provider] of Object.entries(providers)) {
-        const archivedUrl = await provider.checkArchived(url);
-        const statusClass = archivedUrl ? 'status-archived' : 'status-not-archived';
-        const statusText = archivedUrl ? 'Archived' : 'Not archived';
-        
-        html += '<div class="link-item">';
-        html += '<span><span class="status-indicator ' + statusClass + '"></span>' + provider.name + '</span>';
-        if (archivedUrl) {
-          html += '<a href="' + archivedUrl + '" target="_blank" class="btn btn-small">View</a>';
-        } else {
-          html += '<button class="btn btn-small btn-secondary" onclick="archiveSingle(\'' + key + '\', \'' + encodeURIComponent(url) + '\')">Archive</button>';
-        }
-        html += '</div>';
-      }
-      
-      html += '</div>';
-      resultsDiv.innerHTML = html;
-    }
-    
-    function archiveSingle(provider, url) {
-      url = decodeURIComponent(url);
-      window.open(providers[provider].archiveUrl(url), '_blank');
-    }
-    
-    // ============ CRAWL & ARCHIVE ============
-    // Use Wayback CDX API to find links (no CORS needed)
-    async function getLinksFromWayback(url) {
       try {
-        const domain = new URL(url).hostname;
-        const res = await fetch(`https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(domain + '/*')}&output=json&limit=100`);
+        // Try Wayback CDX API
+        const domain = baseUrl.hostname;
+        const res = await fetch(`https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(domain + '/*')}&output=json&limit=200`);
         const data = await res.json();
         
-        if (!data || data.length < 2) return [];
-        
-        const links = new Set();
-        for (let i = 1; i < data.length; i++) {
-          const row = data[i];
-          if (row[2] === '200') { // only successful captures
-            links.add(row[2] || row[1]);
+        if (data && data.length > 1) {
+          for (let i = 1; i < data.length; i++) {
+            const row = data[i];
+            const linkUrl = row[2] || row[1];
+            if (linkUrl && !linkUrl.match(/\.(jpg|png|gif|css|js|woff|svg)$/i)) {
+              try {
+                const linkObj = new URL(linkUrl);
+                const isInternal = linkObj.hostname === baseUrl.hostname;
+                
+                if (isInternal || includeExternal) {
+                  links.set(linkUrl, { url: linkUrl, internal: isInternal, status: 'unknown' });
+                }
+              } catch {}
+            }
           }
         }
         
-        return Array.from(links).slice(0, 50); // limit to 50
-      } catch (e) {
-        console.error('CDX error:', e);
-        return [];
-      }
-    }
-    
-    // Extract links from page using a proxy
-    async function extractLinksFromPage(url) {
-      // Use textise dot iitty to get plain text and extract URLs
-      try {
-        const res = await fetch(`https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`);
-        const text = await res.text();
-        
-        // Simple URL regex
-        const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-        const matches = text.match(urlRegex) || [];
-        
-        // Filter to same domain
-        const baseUrl = new URL(url);
-        const sameDomain = matches.filter(u => {
+        // If no links from Wayback, try text extraction
+        if (links.size === 0) {
           try {
-            return new URL(u).hostname === baseUrl.hostname;
-          } catch { return false; }
-        });
-        
-        return [...new Set(sameDomain)].slice(0, 50);
+            const textRes = await fetch(`https://r.jina.ai/http://${baseUrl.hostname}${baseUrl.pathname}`);
+            const text = await textRes.text();
+            const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
+            let matches = text.match(urlRegex) || [];
+            
+            for (const linkUrl of [...new Set(matches)].slice(0, 100)) {
+              try {
+                const linkObj = new URL(linkUrl);
+                const isInternal = linkObj.hostname === baseUrl.hostname;
+                if (isInternal || includeExternal) {
+                  links.set(linkUrl, { url: linkUrl, internal: isInternal, status: 'unknown' });
+                }
+              } catch {}
+            }
+          } catch {}
+        }
       } catch (e) {
-        console.error('Extract error:', e);
-        return [];
+        console.error('Crawl error:', e);
+      }
+      
+      // Always add the base URL
+      if (!links.has(url)) {
+        links.set(url, { url: url, internal: true, status: 'unknown' });
+      }
+      
+      // Filter by depth
+      if (crawlDepth === 1) {
+        links = new Map([[url, links.get(url)]].filter(Boolean));
+      }
+      
+      crawlLinks = Array.from(links.values()).slice(0, 100); // Limit to 100
+      renderCrawlTable();
+      
+      // Auto check if enabled
+      if (settings.autoCheck) {
+        setTimeout(() => checkAllStatus(), 500);
       }
     }
     
-    async function crawlAndArchive() {
-      const url = document.getElementById('crawl-url').value.trim();
-      if (!url) return alert('Enter a URL');
-      
+    function renderCrawlTable() {
       const resultsDiv = document.getElementById('crawl-results');
-      resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Crawling...</div>';
+      const statsDiv = document.getElementById('crawl-stats');
+      const actionBar = document.getElementById('crawl-action-bar');
       
-      let links = [];
+      const internal = crawlLinks.filter(l => l.internal).length;
+      const external = crawlLinks.filter(l => !l.internal).length;
+      const archived = crawlLinks.filter(l => l.status === 'archived').length;
       
-      if (crawlDepth === 1) {
-        // Just the single page
-        links = [url];
-      } else {
-        // Try to get links from Wayback first
-        links = await getLinksFromWayback(url);
+      statsDiv.classList.remove('hidden');
+      statsDiv.innerHTML = `
+        <div class="stat"><div class="stat-num">${crawlLinks.length}</div><div class="stat-label">Total Links</div></div>
+        <div class="stat"><div class="stat-num">${internal}</div><div class="stat-label">Internal</div></div>
+        <div class="stat"><div class="stat-num">${external}</div><div class="stat-label">External</div></div>
+        <div class="stat"><div class="stat-num">${archived}</div><div class="stat-label">Archived</div></div>
+      `;
+      
+      if (crawlLinks.length === 0) {
+        resultsDiv.innerHTML = '<div class="summary">No links found. Try a different URL.</div>';
+        actionBar.classList.add('hidden');
+        return;
+      }
+      
+      let html = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th class="checkbox-cell"><input type="checkbox" class="checkbox" onchange="toggleAll(this)"></th>
+                <th>URL</th>
+                <th>Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      for (const link of crawlLinks) {
+        const statusClass = link.status === 'archived' ? 'status-archived' : (link.status === 'checking' ? 'status-checking' : 'status-not-archived');
+        const statusText = link.status === 'archived' ? 'Archived' : (link.status === 'checking' ? 'Checking...' : 'Not archived');
+        const typeClass = link.internal ? 'link-internal' : 'link-external';
+        const typeText = link.internal ? 'Internal' : 'External';
         
-        if (links.length === 0) {
-          // Fallback: try direct extraction
-          links = await extractLinksFromPage(url);
-        }
-        
-        if (links.length === 0) {
-          links = [url]; // fallback to just the main page
-        }
+        html += `
+          <tr>
+            <td class="checkbox-cell"><input type="checkbox" class="checkbox link-checkbox" data-url="${encodeURIComponent(link.url)}"></td>
+            <td class="url-cell">${link.url.substring(0, 80)}${link.url.length > 80 ? '...' : ''}</td>
+            <td><span class="${typeClass}">${typeText}</span></td>
+            <td><span class="status-indicator ${statusClass}"></span>${statusText}</td>
+          </tr>
+        `;
       }
       
-      crawledLinks = links;
-      
-      // Archive all links
-      const provider = providers[selectedProvider];
-      let archived = 0;
-      
-      for (const link of links) {
-        window.open(provider.archiveUrl(link), '_blank');
-        archived++;
-        await new Promise(r => setTimeout(r, 300)); // rate limit
-      }
-      
-      renderCrawlResults(url, links, provider.name, archived);
-    }
-    
-    async function checkCrawlStatus() {
-      const url = document.getElementById('crawl-url').value.trim();
-      if (!url) return alert('Enter a URL');
-      
-      const resultsDiv = document.getElementById('crawl-results');
-      resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Checking...</div>';
-      
-      let links = [];
-      
-      if (crawlDepth === 1) {
-        links = [url];
-      } else {
-        links = await getLinksFromWayback(url);
-        if (links.length === 0) {
-          links = await extractLinksFromPage(url);
-        }
-        if (links.length === 0) {
-          links = [url];
-        }
-      }
-      
-      crawledLinks = links;
-      
-      // Check status for each link
-      let html = '<div class="stats">';
-      let archivedCount = 0;
-      
-      for (const link of links.slice(0, 20)) { // limit checks
-        const archivedUrl = await providers.wayback.checkArchived(link);
-        if (archivedUrl) archivedCount++;
-      }
-      
-      html += '<div class="stat"><div class="stat-num">' + links.length + '</div><div class="stat-label">Links Found</div></div>';
-      html += '<div class="stat"><div class="stat-num">' + archivedCount + '</div><div class="stat-label">Already Archived</div></div>';
-      html += '<div class="stat"><div class="stat-num">' + (links.length - archivedCount) + '</div><div class="stat-label">Need Archive</div></div>';
-      html += '</div>';
-      
-      // Show links
-      html += '<div class="link-list">';
-      for (const link of links.slice(0, 30)) {
-        const archivedUrl = await providers.wayback.checkArchived(link);
-        const statusClass = archivedUrl ? 'status-archived' : 'status-not-archived';
-        
-        html += '<div class="link-item">';
-        html += '<span class="link-url">' + link.substring(0, 60) + (link.length > 60 ? '...' : '') + '</span>';
-        if (archivedUrl) {
-          html += '<a href="' + archivedUrl + '" target="_blank" class="btn btn-small">View</a>';
-        } else {
-          html += '<span class="status-indicator status-not-archived"></span>';
-        }
-        html += '</div>';
-      }
-      html += '</div>';
-      
-      if (links.length > 30) {
-        html += '<p style="color:#8b949e;margin-top:10px;">...and ' + (links.length - 30) + ' more</p>';
-      }
-      
-      // Add archive all button
-      html += '<div class="btn-group" style="margin-top:16px;">';
-      html += '<button class="btn" onclick="archiveAllCrawled()">Archive All ' + links.length + ' URLs</button>';
-      html += '</div>';
-      
+      html += '</tbody></table></div>';
       resultsDiv.innerHTML = html;
+      actionBar.classList.remove('hidden');
     }
     
-    function archiveAllCrawled() {
-      if (!crawledLinks.length) return alert('No links to archive');
-      
+    function toggleAll(source) {
+      document.querySelectorAll('.link-checkbox').forEach(cb => cb.checked = source.checked);
+    }
+    
+    async function checkAllStatus() {
       const provider = providers[selectedProvider];
       
-      for (const link of crawledLinks) {
-        window.open(provider.archiveUrl(link), '_blank');
+      // Show checking state
+      crawlLinks.forEach(l => l.status = 'checking');
+      renderCrawlTable();
+      
+      for (let i = 0; i < crawlLinks.length; i++) {
+        const link = crawlLinks[i];
+        link.status = 'checking';
+        
+        // Update single row
+        const checkboxes = document.querySelectorAll('.link-checkbox');
+        if (checkboxes[i]) {
+          const row = checkboxes[i].closest('tr');
+          row.querySelector('.status-indicator').className = 'status-indicator status-checking';
+          row.querySelector('td:last-child').innerHTML = '<span class="status-indicator status-checking"></span>Checking...';
+        }
+        
+        const archivedUrl = await provider.checkArchived(link.url);
+        link.status = archivedUrl ? 'archived' : 'not-archived';
+        link.archivedUrl = archivedUrl;
+        
+        // Update row
+        if (checkboxes[i]) {
+          const row = checkboxes[i].closest('tr');
+          const statusClass = archivedUrl ? 'status-archived' : 'status-not-archived';
+          const statusText = archivedUrl ? 'Archived' : 'Not archived';
+          row.querySelector('.status-indicator').className = 'status-indicator ' + statusClass;
+          row.querySelector('td:last-child').innerHTML = '<span class="status-indicator ' + statusClass + '"></span>' + statusText;
+        }
+        
+        await new Promise(r => setTimeout(r, 100)); // Rate limit
       }
       
-      document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + crawledLinks.length + ' archive pages!</div>';
+      // Update stats
+      const archived = crawlLinks.filter(l => l.status === 'archived').length;
+      const statsDiv = document.getElementById('crawl-stats-inner');
+      statsDiv.innerHTML = `
+        <div class="stat"><div class="stat-num">${crawlLinks.length}</div><div class="stat-label">Total</div></div>
+        <div class="stat"><div class="stat-num">${archived}</div><div class="stat-label">Archived</div></div>
+        <div class="stat"><div class="stat-num">${crawlLinks.length - archived}</div><div class="stat-label">Need Archive</div></div>
+      `;
     }
     
-    function renderCrawlResults(baseUrl, links, providerName, archived) {
-      let html = '<div class="summary"><strong>' + links.length + '</strong> URLs found, <strong>' + archived + '</strong> sent to <strong>' + providerName + '</strong></div>';
+    function archiveAll() {
+      const provider = providers[selectedProvider];
+      const rate = parseInt(document.getElementById('setting-rate')?.value || 500);
       
-      html += '<div class="link-list">';
-      for (const link of links.slice(0, 20)) {
-        const provider = providers[selectedProvider];
-        html += '<div class="link-item">';
-        html += '<span class="link-url">' + link.substring(0, 50) + (link.length > 50 ? '...' : '') + '</span>';
-        html += '<a href="' + provider.archiveUrl(link) + '" target="_blank" class="btn btn-small">→</a>';
-        html += '</div>';
+      crawlLinks.forEach((link, i) => {
+        setTimeout(() => {
+          window.open(provider.archiveUrl(link.url), '_blank');
+          addToHistory(link.url, 'archive', selectedProvider);
+        }, i * rate);
+      });
+      
+      document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + crawlLinks.length + ' archive pages!</div>';
+    }
+    
+    function archiveUnarchived() {
+      const unarchived = crawlLinks.filter(l => l.status !== 'archived');
+      const provider = providers[selectedProvider];
+      const rate = parseInt(document.getElementById('setting-rate')?.value || 500);
+      
+      unarchived.forEach((link, i) => {
+        setTimeout(() => {
+          window.open(provider.archiveUrl(link.url), '_blank');
+          addToHistory(link.url, 'archive', selectedProvider);
+        }, i * rate);
+      });
+      
+      document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + unarchived.length + +' archive pages!</div>';
+    }
+    
+    function archiveSelected() {
+      const checkboxes = document.querySelectorAll('.link-checkbox:checked');
+      const selected = Array.from(checkboxes).map(cb => decodeURIComponent(cb.dataset.url));
+      
+      if (selected.length === 0) return alert('Select links to archive');
+      
+      const provider = providers[selectedProvider];
+      const rate = parseInt(document.getElementById('setting-rate')?.value || 500);
+      
+      selected.forEach((url, i) => {
+        setTimeout(() => {
+          window.open(provider.archiveUrl(url), '_blank');
+          addToHistory(url, 'archive', selectedProvider);
+        }, i * rate);
+      });
+      
+      document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + selected.length + ' archive pages!</div>';
+    }
+    
+    // ============ HISTORY ============
+    function addToHistory(url, action, provider) {
+      const history = JSON.parse(localStorage.getItem('webark-history') || '[]');
+      history.unshift({
+        url,
+        action,
+        provider,
+        timestamp: new Date().toISOString()
+      });
+      // Keep last 100
+      localStorage.setItem('webark-history', JSON.stringify(history.slice(0, 100)));
+    }
+    
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('webark-history') || '[]');
+      const listDiv = document.getElementById('history-list');
+      
+      if (history.length === 0) {
+        listDiv.innerHTML = '<div class="summary">No history yet. Start archiving!</div>';
+        return;
       }
-      html += '</div>';
       
-      if (links.length > 20) {
-        html += '<p style="color:#8b949e;margin-top:10px;">...and ' + (links.length - 20) + ' more</p>';
+      let html = '';
+      for (const item of history) {
+        const date = new Date(item.timestamp);
+        const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        html += `
+          <div class="history-item">
+            <div class="history-url">${item.url}</div>
+            <div class="history-meta">
+              <span class="badge badge-success">${item.action}</span>
+              via ${providers[item.provider]?.name || item.provider} • ${timeStr}
+            </div>
+          </div>
+        `;
       }
       
-      document.getElementById('crawl-results').innerHTML = html;
+      listDiv.innerHTML = html;
+    }
+    
+    function clearHistory() {
+      if (confirm('Clear all history?')) {
+        localStorage.removeItem('webark-history');
+        loadHistory();
+      }
     }
     
     // ============ SERVICE WORKER ============
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
     }
+    
+    init();
   </script>
 </body>
 </html>
