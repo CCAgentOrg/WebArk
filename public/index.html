@@ -410,76 +410,118 @@
       const url = document.getElementById('crawl-url').value.trim();
       if (!url) return alert('Enter a URL');
       
+      // Validate URL
+      try {
+        new URL(url);
+      } catch {
+        return alert('Invalid URL');
+      }
+      
       const resultsDiv = document.getElementById('crawl-results');
       resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Finding links...</div>';
       
-      let links = new Map();
       const baseUrl = new URL(url);
       const includeExternal = document.getElementById('include-external').checked;
       
-      try {
-        // Try Wayback CDX API
-        const domain = baseUrl.hostname;
-        const res = await fetch(`https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(domain + '/*')}&output=json&limit=200`);
-        const data = await res.json();
-        
-        if (data && data.length > 1) {
-          for (let i = 1; i < data.length; i++) {
-            const row = data[i];
-            const linkUrl = row[2] || row[1];
-            if (linkUrl && !linkUrl.match(/\.(jpg|png|gif|css|js|woff|svg)$/i)) {
-              try {
-                const linkObj = new URL(linkUrl);
-                const isInternal = linkObj.hostname === baseUrl.hostname;
+      // Always add the base URL first
+      const links = new Map();
+      links.set(normalizeUrl(url), { url: url, internal: true, status: 'unknown' });
+      
+      if (crawlDepth > 1) {
+        // Try Wayback CDX API with proper parameters
+        try {
+          const domain = baseUrl.hostname;
+          const res = await fetch(
+            `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(domain + '/*')}&output=json&fl=original&filter=statuscode:200&limit=300`
+          );
+          const data = await res.json();
+          
+          if (data && data.length > 1) {
+            for (let i = 1; i < data.length; i++) {
+              const originalUrl = data[i][0];
+              if (originalUrl && isValidUrl(originalUrl)) {
+                const normalized = normalizeUrl(originalUrl);
+                const linkUrl = new URL(normalized);
+                const isInternal = linkUrl.hostname === baseUrl.hostname;
                 
-                if (isInternal || includeExternal) {
-                  links.set(linkUrl, { url: linkUrl, internal: isInternal, status: 'unknown' });
+                if ((isInternal || includeExternal) && !normalized.match(/\.(jpg|png|gif|css|js|woff|svg|pdf|zip)$/i)) {
+                  if (!links.has(normalized)) {
+                    links.set(normalized, { url: normalized, internal: isInternal, status: 'unknown' });
+                  }
                 }
-              } catch {}
+              }
             }
           }
+        } catch (e) {
+          console.error('Wayback CDX error:', e);
         }
         
-        // If no links from Wayback, try text extraction
-        if (links.size === 0) {
+        // If we got limited results, try page extraction
+        if (links.size < 5) {
           try {
-            const textRes = await fetch(`https://r.jina.ai/http://${baseUrl.hostname}${baseUrl.pathname}`);
-            const text = await textRes.text();
-            const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-            let matches = text.match(urlRegex) || [];
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            const res = await fetch(proxyUrl);
+            const data = await res.json();
             
-            for (const linkUrl of [...new Set(matches)].slice(0, 100)) {
-              try {
-                const linkObj = new URL(linkUrl);
-                const isInternal = linkObj.hostname === baseUrl.hostname;
-                if (isInternal || includeExternal) {
-                  links.set(linkUrl, { url: linkUrl, internal: isInternal, status: 'unknown' });
-                }
-              } catch {}
+            if (data.contents) {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(data.contents, 'text/html');
+              const anchors = doc.querySelectorAll('a[href]');
+              
+              for (const anchor of anchors) {
+                try {
+                  const href = anchor.getAttribute('href');
+                  if (!href) continue;
+                  
+                  let fullUrl;
+                  try {
+                    fullUrl = new URL(href, baseUrl).href;
+                  } catch { continue; }
+                  
+                  if (!fullUrl.startsWith('http') || fullUrl.match(/\.(jpg|png|gif|css|js|woff|svg|pdf|zip)$/i)) continue;
+                  
+                  const normalized = normalizeUrl(fullUrl);
+                  const linkUrl = new URL(normalized);
+                  const isInternal = linkUrl.hostname === baseUrl.hostname;
+                  
+                  if ((isInternal || includeExternal) && !links.has(normalized)) {
+                    links.set(normalized, { url: normalized, internal: isInternal, status: 'unknown' });
+                  }
+                } catch {}
+              }
             }
-          } catch {}
+          } catch (e) {
+            console.error('Page extraction error:', e);
+          }
         }
-      } catch (e) {
-        console.error('Crawl error:', e);
       }
       
-      // Always add the base URL
-      if (!links.has(url)) {
-        links.set(url, { url: url, internal: true, status: 'unknown' });
-      }
-      
-      // Filter by depth
-      if (crawlDepth === 1) {
-        links = new Map([[url, links.get(url)]].filter(Boolean));
-      }
-      
-      crawlLinks = Array.from(links.values()).slice(0, 100); // Limit to 100
+      crawlLinks = Array.from(links.values()).slice(0, 100);
       renderCrawlTable();
       
       // Auto check if enabled
       if (settings.autoCheck) {
         setTimeout(() => checkAllStatus(), 500);
       }
+    }
+    
+    // Helper functions
+    function isValidUrl(str) {
+      try {
+        const u = new URL(str);
+        return u.protocol === 'http:' || u.protocol === 'https:';
+      } catch { return false; }
+    }
+    
+    function normalizeUrl(url) {
+      try {
+        const u = new URL(url);
+        u.hash = '';
+        if ((u.protocol === 'http:' && u.port === '80') || (u.protocol === 'https:' && u.port === '443')) {
+          u.port = '';
+        }
+        return u.href.replace(/\/$/, '');
+      } catch { return url; }
     }
     
     function renderCrawlTable() {
