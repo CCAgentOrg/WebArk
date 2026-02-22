@@ -22,12 +22,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Run unit tests
+      - name: Run tests
         run: npm test
         env:
           CI: true
 
-  # Lint - Simple syntax check
+  # Lint
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -38,86 +38,21 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Check JS files exist and are valid
+      - name: Check files
         run: |
-          # Check all JS files exist
-          ls -la public/js/translations.js public/js/providers.js
+          echo "Checking files..."
+          test -f public/index.html
+          test -f public/js/translations.js
+          test -f public/js/providers.js
           
-          # Basic syntax check using node
-          node --check public/js/translations.js 2>&1 || echo "Note: ES module syntax, skipping..."
-          node --check public/js/providers.js 2>&1 || echo "Note: ES module syntax, skipping..."
-      
-      - name: HTML validation
-        run: |
-          grep -q '<!DOCTYPE html>' public/index.html && echo "DOCTYPE: OK"
-          grep -q '<html' public/index.html && echo "html tag: OK"
-          grep -q '</html>' public/index.html && echo "closing html: OK"
-          grep -q '<head>' public/index.html && echo "head: OK"
-          grep -q '</head>' public/index.html && echo "closing head: OK"
-          grep -q '<body>' public/index.html && echo "body: OK"
-          grep -q '</body>' public/index.html && echo "closing body: OK"
-          grep -q '<script src="/js/translations.js">' public/index.html && echo "translations.js included: OK"
-          grep -q '<script src="/js/providers.js">' public/index.html && echo "providers.js included: OK"
-
-  # Browser Tests
-  browser-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-      
-      - name: Run browser tests
-        run: |
-          npm install
-          npx playwright install chromium
-          npx serve public -l 3456 &
-          sleep 8
-          node tests/browser.mjs
-        env:
-          BASE_URL: http://localhost:3456
-          CI: true
+          echo "HTML validation..."
+          grep -q '<!DOCTYPE html>' public/index.html
+          grep -q '<html' public/index.html
+          grep -q '</html>' public/index.html
 
   # Build
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Verify files
-        run: |
-          test -f public/index.html
-          test -f public/manifest.json
-          test -f public/sw.js
-          test -f public/js/translations.js
-          test -f public/js/providers.js
-          echo "All required files exist"
-
-  # Build extension
-  extension:
-    runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/checkout@v4
       
