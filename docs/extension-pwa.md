@@ -1,8 +1,10 @@
-# ArchiveBox — Extension + PWA Design
+# WebArk — Extension + PWA Design
 
 **Date:** 2026-02-22  
 **Status:** Design Draft  
 **Goal:** Eliminate server, use browser extension + PWA only
+
+**Name:** WebArk — Wayback + Ark (web archive)
 
 ---
 
@@ -64,7 +66,7 @@
 **IndexedDB Schema:**
 
 ```js
-// Database: ArchiveBoxDB
+// Database: WebArkDB
 // Object stores:
 
 archives {
