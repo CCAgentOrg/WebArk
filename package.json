@@ -6,6 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "bot": "node server.js --bot",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js 2>/dev/null || echo 'SKIP: No tests implemented yet'"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
   }
 }
