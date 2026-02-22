@@ -3,8 +3,9 @@
 
 let chromium;
 try {
-  const playwright = await import('playwright');
-  chromium = playwright.chromium;
+  // Dynamic import for ESM
+  const playwrightModule = await import('playwright');
+  chromium = playwrightModule.chromium;
 } catch (e) {
   console.log('⚠️ Playwright not available, skipping browser tests');
   console.log('Install with: npx playwright install');
