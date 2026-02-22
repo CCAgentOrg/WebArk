@@ -4,121 +4,178 @@ A privacy-first, serverless web archiver. Archive pages to multiple providers di
 
 **Live:** https://ccagentorg.github.io/WebArk/
 
+---
+
 ## Features
 
-- **7 Archive Providers**: Wayback Machine, archive.is, archive.ph, Ghostarchive, ArchiveVN, Textise, Memento
-- **Check Status**: See which providers have a page archived
-- **Crawl & Archive**: Find and archive pages at 1-2 depth levels
-- **Background Mode**: Archive without opening popups (via API)
-- **Skip Top Sites**: Automatically skip Wikipedia, GitHub, etc.
-- **History**: Track your archiving activity
-- **PWA**: Installable web app, works offline
-- **Serverless**: Runs entirely in the browser
+### 📦 Archive
+- Archive URLs to 7 providers (Wayback Machine, archive.is, archive.ph, Ghostarchive, ArchiveVN, Textise, Memento)
+- Background mode - archive without opening popups
+- Rate limiting to avoid being blocked
+
+### 🔍 Check Status
+- See which providers have a page archived
+- One-click archive for unarchived pages
+- Check multiple URLs at once
+
+### 🕷️ Crawl & Archive
+- Discover pages at 1-2 depth levels
+- Table view of all found links
+- Filter internal/external links
+- Skip top sites (Wikipedia, GitHub, etc.)
+- Check status before archiving
+- Archive all, unarchived only, or selected
+
+### ⚙️ Settings
+- Default provider
+- Default depth (1 or 2)
+- Auto-check status
+- Background mode toggle
+- Rate limit configuration
+
+### 📜 History
+- Tracks all archiving activity
+- Persisted in browser localStorage
+
+### 📱 PWA
+- Install as web app
+- Works offline
+- Add to home screen
+
+---
 
 ## Quick Start
 
 ### Live Version
-Just open: https://ccagentorg.github.io/WebArk/
+Open: https://ccagentorg.github.io/WebArk/
 
-### Local Development
+### Local
 ```bash
-# Install
 npm install
-
-# Run server (optional - works without server)
-node server.js
-
-# Run tests
 npm test
 ```
 
-## Usage
+---
 
-### Archive URLs
-1. Enter URLs (one per line)
-2. Select provider
-3. Click "Archive URLs"
+## Usage Guide
 
-### Check Status
-1. Enter a URL
-2. Click "Check Archive Status"
-3. See which providers have it archived
+### Single URL Archive
+1. Go to **Archive** tab
+2. Enter URL(s), one per line
+3. Select provider
+4. Click **Archive URLs**
+5. Done! (Background mode: silent, Popup mode: opens tabs)
 
-### Crawl & Archive
-1. Enter a page URL
-2. Set depth (1 level = single page, 2 levels = site-wide)
-3. Click "Find Links" to discover pages
-4. Click "Check Status" to see what's archived
-5. Click "Archive All" or "Archive Unarchived"
+### Check if Page is Archived
+1. Go to **Check Status** tab
+2. Enter URL
+3. Click **Check Archive Status**
+4. See green (archived) or red (not archived)
+5. Click **Archive** to save unarchived ones
 
-## Settings
+### Crawl Site
+1. Go to **Crawl** tab
+2. Enter a page URL
+3. Set depth:
+   - **1 Level**: Just that page
+   - **2 Levels**: Pages on same domain
+4. Toggle **Include external links** if wanted
+5. Toggle **Skip top sites** (enabled by default - skips Wikipedia, GitHub, etc.)
+6. Click **🔍 Find Links**
+7. Review the table - filter by Internal/External
+8. Click **Check Status** to see what's already archived
+9. Click **Archive All** or **Archive Unarchived**
 
-- **Default Provider**: Provider selected by default
-- **Default Depth**: Crawl depth (1 or 2 levels)
-- **Auto-check Status**: Automatically check when finding links
-- **Background Mode**: Archive without popups (where supported)
-- **Rate Limit**: Delay between requests (ms)
+---
 
 ## Providers
 
-| Provider | Background Mode | Check Status |
-|----------|-----------------|--------------|
-| Wayback Machine | ✅ | ✅ |
-| archive.is | ✅ | ✅ |
-| archive.ph | ✅ | ✅ |
-| Ghostarchive | ✅ | ✅ |
-| ArchiveVN | ✅ | ✅ |
-| Textise | ✅ | ✅ |
-| Memento | ❌ (read-only) | ✅ |
+| Provider | Background | Status Check | Notes |
+|----------|------------|--------------|-------|
+| Wayback Machine | ✅ | ✅ | Best coverage, 50B+ pages |
+| archive.is | ✅ | ✅ | Independent, privacy-focused |
+| archive.ph | ✅ | ✅ | Fast, simple |
+| Ghostarchive | ✅ | ✅ | Community archive |
+| ArchiveVN | ✅ | ✅ | Vietnam-focused |
+| Textise | ✅ | ✅ | Text-only (jina.ai) |
+| Memento | ❌ | ✅ | Read-only aggregator |
 
-## Browser Extension
+---
 
-Build a browser extension from the `extension/` folder:
+## Privacy
 
-```bash
-npm run build
-# Creates dist/webark-extension.zip
-```
+**Why WebArk is private:**
+- 🏃 Runs entirely in your browser
+- 🔒 No account required  
+- 📡 Direct to archive providers
+- 💾 Data stays in your browser (localStorage)
 
-Load as unpacked extension in Chrome/Edge.
+**vs Traditional:**
+- Traditional: URL → Your Server → Archive Provider
+- WebArk: URL → Your Browser → Archive Provider
+
+---
 
 ## Architecture
 
 ```
 webark/
-├── public/              # PWA (served by GitHub Pages or any static host)
-│   ├── index.html       # Main app
+├── public/              # PWA (served by GitHub Pages)
+│   ├── index.html       # Main app (~900 lines)
 │   ├── manifest.json    # PWA manifest
 │   └── sw.js           # Service worker
 ├── extension/           # Browser extension
 │   ├── manifest.json
 │   └── lib/
-├── server.js            # Optional Node.js server (for Telegram bot)
-└── tests/              # Unit tests
+│       ├── storage.js   # IndexedDB wrapper
+│       ├── archivers.js # Provider implementations
+│       └── links.js     # Link extraction
+├── server.js           # Optional Node.js server
+├── tests/              # Jest tests
+│   ├── storage.test.js
+│   ├── archivers.test.js
+│   ├── links.test.js
+│   └── providers.test.js
+└── README.md
 ```
 
-## Privacy
-
-| Aspect | Third-Party Services | WebArk (Browser) |
-|--------|---------------------|------------------|
-| **URLs you archive** | Visible to provider | Local only |
-| **Data storage** | Provider's servers | Your browser |
-| **Network** | Through providers | Direct to providers |
-| **Account** | May require | None needed |
-
-**Why WebArk:**
-- Privacy: Runs entirely in your browser
-- No account required
-- No server to deploy (GitHub Pages)
-- No rate limits from us
+---
 
 ## Testing
 
 ```bash
 npm test
-# Runs: storage, archivers, links, providers tests
+# 48+ tests covering:
+# - Storage (IndexedDB)
+# - Archivers (provider configs)
+# - Link extraction & validation
+# - Provider APIs
 ```
+
+---
+
+## Development
+
+### Run locally
+```bash
+npm install
+npx serve public    # Or any static server
+```
+
+### Build extension
+```bash
+npm run build
+# Output: dist/webark-extension.zip
+```
+
+### Deploy to GitHub Pages
+```bash
+# Just push to master - auto-deploys
+git push
+```
+
+---
 
 ## License
 
-MIT
+MIT - See LICENSE file
