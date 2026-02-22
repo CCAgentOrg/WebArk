@@ -1,5 +1,6 @@
 {
-  "testEnvironment": "jest-environment-jsdom",
+  "testEnvironment": "node",
+  "setupFiles": ["./tests/setup.js"],
   "transform": {},
   "moduleFileExtensions": ["js"],
   "testMatch": ["**/tests/**/*.test.js"],
