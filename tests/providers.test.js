@@ -36,6 +36,53 @@ const providers = {
         return null;
       } catch { return null; }
     }
+  },
+  ghostarchive: {
+    name: 'Ghostarchive',
+    archiveUrl: (u) => `https://ghostarchive.org/archive?url=${encodeURIComponent(u)}`,
+    checkArchived: async (url) => {
+      try {
+        const res = await fetch(`https://ghostarchive.org/archive?url=${encodeURIComponent(url)}`);
+        if (res.ok) return `https://ghostarchive.org/archive?url=${encodeURIComponent(url)}`;
+        return null;
+      } catch { return null; }
+    }
+  },
+  archivevn: {
+    name: 'ArchiveVN',
+    archiveUrl: (u) => `https://archive.vn/submit/?url=${encodeURIComponent(u)}`,
+    checkArchived: async (url) => {
+      try {
+        const res = await fetch(`https://archive.vn/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
+        if (res.type === 'opaqueredirect' || res.status === 302) {
+          return `https://archive.vn/${encodeURIComponent(url)}`;
+        }
+        return null;
+      } catch { return null; }
+    }
+  },
+  textise: {
+    name: 'Textise',
+    archiveUrl: (u) => `https://r.jina.ai/http://${u.replace(/^https?:\/\//, '')}`,
+    checkArchived: async (url) => {
+      try {
+        const res = await fetch(`https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`);
+        if (res.ok) return `https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`;
+        return null;
+      } catch { return null; }
+    }
+  },
+  memento: {
+    name: 'Memento',
+    archiveUrl: (u) => `https://timetravel.mementoweb.org/list/${encodeURIComponent(u)}`,
+    checkArchived: async (url) => {
+      try {
+        const res = await fetch(`https://timetravel.mementoweb.org/api/json/list/${encodeURIComponent(url)}`);
+        const data = await res.json();
+        if (data.Memento_Datetime) return `https://timetravel.mementoweb.org/list/${encodeURIComponent(url)}`;
+        return null;
+      } catch { return null; }
+    }
   }
 };
 
@@ -68,6 +115,38 @@ describe('Providers', () => {
     test('generates archive URL with base', () => {
       const url = providers.archiveph.archiveUrl('https://example.com/page');
       expect(url).toContain('archive.ph/submit/');
+      expect(url).toContain('example.com');
+    });
+  });
+  
+  describe('ghostarchive', () => {
+    test('generates archive URL', () => {
+      const url = providers.ghostarchive.archiveUrl('https://example.com/page');
+      expect(url).toContain('ghostarchive.org/archive');
+      expect(url).toContain('example.com');
+    });
+  });
+  
+  describe('archivevn', () => {
+    test('generates archive URL', () => {
+      const url = providers.archivevn.archiveUrl('https://example.com/page');
+      expect(url).toContain('archive.vn/submit/');
+      expect(url).toContain('example.com');
+    });
+  });
+  
+  describe('textise', () => {
+    test('generates archive URL', () => {
+      const url = providers.textise.archiveUrl('https://example.com/page');
+      expect(url).toContain('r.jina.ai/http://');
+      expect(url).toContain('example.com');
+    });
+  });
+  
+  describe('memento', () => {
+    test('generates archive URL', () => {
+      const url = providers.memento.archiveUrl('https://example.com/page');
+      expect(url).toContain('timetravel.mementoweb.org/list');
       expect(url).toContain('example.com');
     });
   });
@@ -108,6 +187,8 @@ describe('Settings', () => {
     rateLimit: 500
   };
   
+  const validProviders = ['wayback', 'archiveis', 'archiveph', 'ghostarchive', 'archivevn', 'textise', 'memento'];
+  
   test('has required settings', () => {
     expect(defaultSettings).toHaveProperty('provider');
     expect(defaultSettings).toHaveProperty('depth');
@@ -116,7 +197,6 @@ describe('Settings', () => {
   });
   
   test('provider is valid', () => {
-    const validProviders = ['wayback', 'archiveis', 'archiveph'];
     expect(validProviders).toContain(defaultSettings.provider);
   });
   

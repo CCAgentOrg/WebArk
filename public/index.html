@@ -142,6 +142,10 @@
         <button class="provider-btn active" data-provider="wayback">Wayback</button>
         <button class="provider-btn" data-provider="archiveis">archive.is</button>
         <button class="provider-btn" data-provider="archiveph">archive.ph</button>
+        <button class="provider-btn" data-provider="ghostarchive">Ghost</button>
+        <button class="provider-btn" data-provider="archivevn">ArchiveVN</button>
+        <button class="provider-btn" data-provider="textise">Textise</button>
+        <button class="provider-btn" data-provider="memento">Memento</button>
       </div>
       <div class="btn-group">
         <button class="btn" onclick="archive()">Archive URLs</button>
@@ -171,6 +175,10 @@
         <button class="provider-btn active" data-provider="wayback">Wayback</button>
         <button class="provider-btn" data-provider="archiveis">archive.is</button>
         <button class="provider-btn" data-provider="archiveph">archive.ph</button>
+        <button class="provider-btn" data-provider="ghostarchive">Ghost</button>
+        <button class="provider-btn" data-provider="archivevn">ArchiveVN</button>
+        <button class="provider-btn" data-provider="textise">Textise</button>
+        <button class="provider-btn" data-provider="memento">Memento</button>
       </div>
       
       <div class="btn-group">
@@ -213,6 +221,10 @@
             <option value="wayback">Wayback</option>
             <option value="archiveis">archive.is</option>
             <option value="archiveph">archive.ph</option>
+            <option value="ghostarchive">Ghostarchive</option>
+            <option value="archivevn">ArchiveVN</option>
+            <option value="textise">Textise</option>
+            <option value="memento">Memento</option>
           </select>
         </div>
         
@@ -288,6 +300,53 @@
             if (res.type === 'opaqueredirect' || res.status === 302) {
               return `https://archive.ph/${encodeURIComponent(url)}`;
             }
+            return null;
+          } catch { return null; }
+        }
+      },
+      ghostarchive: {
+        name: 'Ghostarchive',
+        archiveUrl: (u) => `https://ghostarchive.org/archive?url=${encodeURIComponent(u)}`,
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://ghostarchive.org/archive?url=${encodeURIComponent(url)}`);
+            if (res.ok) return `https://ghostarchive.org/archive?url=${encodeURIComponent(url)}`;
+            return null;
+          } catch { return null; }
+        }
+      },
+      archivevn: {
+        name: 'ArchiveVN',
+        archiveUrl: (u) => `https://archive.vn/submit/?url=${encodeURIComponent(u)}`,
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://archive.vn/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
+            if (res.type === 'opaqueredirect' || res.status === 302) {
+              return `https://archive.vn/${encodeURIComponent(url)}`;
+            }
+            return null;
+          } catch { return null; }
+        }
+      },
+      textise: {
+        name: 'Textise',
+        archiveUrl: (u) => `https://r.jina.ai/http://${u.replace(/^https?:\/\//, '')}`,
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`);
+            if (res.ok) return `https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`;
+            return null;
+ (res.ok)          } catch { return null; }
+        }
+      },
+      memento: {
+        name: 'Memento',
+        archiveUrl: (u) => `https://timetravel.mementoweb.org/list/${encodeURIComponent(u)}`,
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://timetravel.mementoweb.org/api/json/list/${encodeURIComponent(url)}`);
+            const data = await res.json();
+            if (data.Memento_Datetime) return `https://timetravel.mementoweb.org/list/${encodeURIComponent(url)}`;
             return null;
           } catch { return null; }
         }
