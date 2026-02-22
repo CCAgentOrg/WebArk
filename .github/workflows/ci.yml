@@ -82,6 +82,8 @@ jobs:
       
       - name: Start server and run tests
         run: |
+          echo "Working directory: $(pwd)"
+          ls -la tests/
           npx serve public -l 3456 &
           sleep 5
           node tests/browser.mjs
