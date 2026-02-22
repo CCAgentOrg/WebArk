@@ -1,5 +1,9 @@
 # 🗄️ WebArk
 
+[![Tests](https://github.com/CCAgentOrg/WebArk/actions/workflows/ci.yml/badge.svg)](https://github.com/CCAgentOrg/WebArk/actions)
+[![Coverage](./coverage.svg)](https://github.com/CCAgentOrg/WebArk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A privacy-first, serverless web archiver. Archive pages to multiple providers directly from your browser - no server required.
 
 **Live:** https://ccagentorg.github.io/WebArk/
@@ -9,7 +13,7 @@ A privacy-first, serverless web archiver. Archive pages to multiple providers di
 ## Features
 
 ### 📦 Archive
-- Archive URLs to 7 providers (Wayback Machine, archive.is, archive.ph, Ghostarchive, ArchiveVN, Textise, Memento)
+- Archive URLs to 8 providers (Wayback Machine, archive.is, archive.ph, Ghostarchive, ArchiveVN, Textise, Memento, Local)
 - Background mode - archive without opening popups
 - Rate limiting to avoid being blocked
 
