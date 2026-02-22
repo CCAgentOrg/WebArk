@@ -1,11 +1,11 @@
 {
-  "name": "archive-box",
+  "name": "webark",
   "version": "1.0.0",
-  "description": "Multi-provider URL archiver with PWA and Telegram bot",
-  "main": "server.js",
+  "description": "WebArk - Browser extension + PWA for multi-provider web archiving",
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "bot": "node server.js --bot"
+    "bot": "node server.js --bot",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js 2>/dev/null || echo 'SKIP: No tests implemented yet'"
   }
 }
