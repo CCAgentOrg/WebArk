@@ -863,3 +863,935 @@
       }
     };
     
+    // Add more languages (condensed for file size)
+    // Adding top 50 languages would be ~2000 more lines
+    // Using a smaller subset for now
+    
+    let currentLang = localStorage.getItem('webark-lang') || 'en';
+    
+    function t(key) {
+      return translations[currentLang]?.[key] || translations.en[key] || key;
+    }
+    
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('webark-lang', lang);
+      applyTranslations();
+    }
+    
+    function applyTranslations() {
+      // Apply translations to elements with data-i18n attribute
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+      
+      // Update placeholders
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.placeholder = t(key);
+      });
+    }
+    
+    const providers = {
+      wayback: {
+        name: 'Wayback Machine',
+        archiveUrl: (u) => `https://web.archive.org/save/${u}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch('https://web.archive.org/save/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `url=${encodeURIComponent(url)}`
+            });
+            const jobUrl = res.url || `https://web.archive.org/web/*/${url}`;
+            return { success: true, archivedUrl: jobUrl };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://archive.org/wayback/available?url=${encodeURIComponent(url)}`);
+            const data = await res.json();
+            return data.archived_snapshots?.closest?.available === true ? data.archived_snapshots.closest.url : null;
+          } catch { return null; }
+        }
+      },
+      archiveis: {
+        name: 'archive.is',
+        archiveUrl: (u) => `https://archive.is/submit/?url=${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch('https://archive.is/submit/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `url=${encodeURIComponent(url)}`
+            });
+            const jobUrl = res.url || `https://archive.is/${encodeURIComponent(url)}`;
+            return { success: true, archivedUrl: jobUrl };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://archive.is/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
+            if (res.type === 'opaqueredirect' || res.status === 302) {
+              return `https://archive.is/${encodeURIComponent(url)}`;
+            }
+            return null;
+          } catch { return null; }
+        }
+      },
+      archiveph: {
+        name: 'archive.ph',
+        archiveUrl: (u) => `https://archive.ph/submit/?url=${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch('https://archive.ph/submit/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `url=${encodeURIComponent(url)}`
+            });
+            const jobUrl = res.url || `https://archive.ph/${encodeURIComponent(url)}`;
+            return { success: true, archivedUrl: jobUrl };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://archive.ph/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
+            if (res.type === 'opaqueredirect' || res.status === 302) {
+              return `https://archive.ph/${encodeURIComponent(url)}`;
+            }
+            return null;
+          } catch { return null; }
+        }
+      },
+      ghostarchive: {
+        name: 'Ghostarchive',
+        archiveUrl: (u) => `https://ghostarchive.org/archive?url=${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch(`https://ghostarchive.org/archive?url=${encodeURIComponent(url)}`);
+            return { success: res.ok, archivedUrl: res.url };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://ghostarchive.org/archive?url=${encodeURIComponent(url)}`);
+            if (res.ok) return `https://ghostarchive.org/archive?url=${encodeURIComponent(url)}`;
+            return null;
+          } catch { return null; }
+        }
+      },
+      archivevn: {
+        name: 'ArchiveVN',
+        archiveUrl: (u) => `https://archive.vn/submit/?url=${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          try {
+            const res = await fetch('https://archive.vn/submit/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `url=${encodeURIComponent(url)}`
+            });
+            const jobUrl = res.url || `https://archive.vn/${encodeURIComponent(url)}`;
+            return { success: true, archivedUrl: jobUrl };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://archive.vn/${encodeURIComponent(url)}`, { method: 'HEAD', redirect: 'manual' });
+            if (res.type === 'opaqueredirect' || res.status === 302) {
+              return `https://archive.vn/${encodeURIComponent(url)}`;
+            }
+            return null;
+          } catch { return null; }
+        }
+      },
+      textise: {
+        name: 'Textise',
+        archiveUrl: (u) => `https://r.jina.ai/http://${u.replace(/^https?:\/\//, '')}`,
+        backgroundArchive: async (url) => {
+          try {
+            const textUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`;
+            const res = await fetch(textUrl);
+            if (res.ok) {
+              return { success: true, archivedUrl: textUrl };
+            }
+            return { success: false, error: 'Failed to fetch' };
+          } catch (e) {
+            return { success: false, error: e.message };
+          }
+        },
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`);
+            if (res.ok) return `https://r.jina.ai/http://${url.replace(/^https?:\/\//, '')}`;
+            return null;
+          } catch { return null; }
+        }
+      },
+      memento: {
+        name: 'Memento',
+        archiveUrl: (u) => `https://timetravel.mementoweb.org/list/${encodeURIComponent(u)}`,
+        backgroundArchive: async (url) => {
+          return { success: false, error: 'Memento is read-only' };
+        },
+        checkArchived: async (url) => {
+          try {
+            const res = await fetch(`https://timetravel.mementoweb.org/api/json/list/${encodeURIComponent(url)}`);
+            const data = await res.json();
+            if (data.Memento_Datetime) return `https://timetravel.mementoweb.org/list/${encodeURIComponent(url)}`;
+            return null;
+          } catch { return null; }
+        }
+      },
+      local: {
+        name: '📱 Local',
+        archiveUrl: (u) => `javascript:alert('View in History tab')`,
+        backgroundArchive: async (url) => {
+          return await archiveLocally(url);
+        },
+        checkArchived: async (url) => {
+          return await checkLocalArchive(url);
+        }
+      }
+    };
+    
+    // ============ LOCAL ARCHIVE ============
+    const DB_NAME = 'webark-archives';
+    const STORE_NAME = 'archives';
+    
+    async function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME, { keyPath: 'url' });
+          }
+        };
+      });
+    }
+    
+    async function archiveLocally(url) {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        
+        // Fetch the page
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
+        const data = await res.json();
+        
+        if (!data.contents) {
+          return { success: false, error: 'Failed to fetch page' };
+        }
+        
+        // Parse and inline resources
+        let html = data.contents;
+        
+        // Extract base URL for relative links
+        const baseUrl = new URL(url);
+        
+        // Inline images (convert to data URLs where possible - limited)
+        // For now, just store the HTML with adjusted links
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Update links to be absolute
+        doc.querySelectorAll('a[href]').forEach(a => {
+          try {
+            a.href = new URL(a.getAttribute('href'), baseUrl).href;
+          } catch {}
+        });
+        
+        // Update images to use absolute URLs (can't inline easily without CORS)
+        doc.querySelectorAll('img[src]').forEach(img => {
+          try {
+            img.src = new URL(img.getAttribute('src'), baseUrl).href;
+          } catch {}
+        });
+        
+        // Get final HTML
+        html = '<!DOCTYPE html>\n<html>\n<head>\n';
+        html += `<meta charset="utf-8">\n`;
+        html += `<meta name="webark-original-url" content="${url}">\n`;
+        html += `<meta name="webark-archived-at" content="${new Date().toISOString()}">\n`;
+        html += '</head>\n<body>\n';
+        html += `<!-- Original URL: ${url} -->\n`;
+        html += `<!-- Archived: ${new Date().toISOString()} -->\n`;
+        html += doc.body.innerHTML;
+        html += '\n</body>\n</html>';
+        
+        // Save to IndexedDB
+        const archiveData = {
+          url: url,
+          archivedUrl: url,
+          html: html,
+          title: doc.title || url,
+          archivedAt: new Date().toISOString(),
+          size: html.length
+        };
+        
+        store.put(archiveData);
+        
+        await new Promise((resolve, reject) => {
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+        
+        return { success: true, archivedUrl: '📱 Saved to local storage' };
+      } catch (e) {
+        return { success: false, error: e.message };
+      }
+    }
+    
+    async function checkLocalArchive(url) {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        
+        return new Promise((resolve) => {
+          const request = store.get(url);
+          request.onsuccess = () => {
+            if (request.result) {
+              resolve(url + ' (local)'); // Return URL if archived
+            } else {
+              resolve(null);
+            }
+          };
+          request.onerror = () => resolve(null);
+        });
+      } catch {
+        return null;
+      }
+    }
+    
+    async function getLocalArchives() {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        
+        return new Promise((resolve) => {
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result || []);
+          request.onerror = () => resolve([]);
+        });
+      } catch {
+        return [];
+      }
+    }
+    
+    async function deleteLocalArchive(url) {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.delete(url);
+        
+        await new Promise((resolve) => {
+          tx.oncomplete = resolve;
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    
+    // ============ STATE ============
+    let selectedProvider = 'wayback';
+    let crawlDepth = 2;
+    let crawlLinks = [];
+    let settings = {};
+    
+    // ============ INIT ============
+    function init() {
+      loadSettings();
+      loadHistory();
+      restoreTab();
+    }
+    
+    function loadSettings() {
+      const saved = localStorage.getItem('webark-settings');
+      settings = saved ? JSON.parse(saved) : {
+        provider: 'wayback',
+        depth: 2,
+        autoCheck: false,
+        backgroundMode: true,
+        rateLimit: 500
+      };
+      
+      document.getElementById('setting-provider').value = settings.provider;
+      document.getElementById('setting-depth').value = settings.depth;
+      document.getElementById('setting-autocheck').checked = settings.autoCheck;
+      document.getElementById('setting-background').checked = settings.backgroundMode;
+      document.getElementById('setting-rate').value = settings.rateLimit;
+      
+      // Load language
+      currentLang = localStorage.getItem('webark-lang') || 'en';
+      document.getElementById('setting-lang').value = currentLang;
+      applyTranslations();
+      
+      selectedProvider = settings.provider;
+      crawlDepth = settings.depth;
+      
+      // Update UI
+      document.querySelectorAll('.provider-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.provider === selectedProvider);
+      });
+      document.querySelectorAll('.depth-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === 'depth-' + crawlDepth);
+      });
+    }
+    
+    function saveSettings() {
+      settings = {
+        provider: document.getElementById('setting-provider').value,
+        depth: parseInt(document.getElementById('setting-depth').value),
+        autoCheck: document.getElementById('setting-autocheck').checked,
+        backgroundMode: document.getElementById('setting-background').checked,
+        rateLimit: parseInt(document.getElementById('setting-rate').value)
+      };
+      localStorage.setItem('webark-settings', JSON.stringify(settings));
+    }
+    
+    function changeLanguage(lang) {
+      setLanguage(lang);
+    }
+    
+    function resetSettings() {
+      localStorage.removeItem('webark-settings');
+      loadSettings();
+    }
+    
+    // ============ UI ============
+    function switchTab(tab) {
+      localStorage.setItem('webark-last-tab', tab);
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('[id^="tab-"]').forEach(d => d.classList.add('hidden'));
+      event?.target?.classList.add('active');
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      
+      if (tab === 'history') loadHistory();
+    }
+    
+    function restoreTab() {
+      const last = localStorage.getItem('webark-last-tab') || 'archive';
+      document.querySelector(`[onclick="switchTab('${last}')"]`)?.click();
+    }
+    
+    document.querySelectorAll('.provider-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.provider-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedProvider = btn.dataset.provider;
+      });
+    });
+    
+    function setDepth(depth) {
+      crawlDepth = depth;
+      document.querySelectorAll('.depth-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('depth-' + depth).classList.add('active');
+    }
+    
+    // ============ ARCHIVE ============
+    async function archive() {
+      const urls = document.getElementById('urls').value.split('\n').map(u => u.trim()).filter(u => u);
+      if (!urls.length) return alert('Enter URLs');
+      
+      const provider = providers[selectedProvider];
+      const resultsDiv = document.getElementById('archive-results');
+      const useBackground = settings.backgroundMode && provider.backgroundArchive;
+      
+      if (useBackground) {
+        resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Archiving in background...</div>';
+        
+        let success = 0;
+        let failed = 0;
+        const rate = settings.rateLimit || 500;
+        
+        for (const url of urls) {
+          const result = await provider.backgroundArchive(url);
+          if (result.success) {
+            success++;
+            addToHistory(url, 'archive', selectedProvider);
+          } else {
+            failed++;
+          }
+          await new Promise(r => setTimeout(r, rate));
+        }
+        
+        resultsDiv.innerHTML = `<div class="success">Archived ${success} URL(s)${failed > 0 ? ', ' + failed + ' failed' : ''}</div>`;
+      } else {
+        // Fallback to popups
+        resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Opening archive pages...</div>';
+        
+        let opened = 0;
+        for (const url of urls) {
+          window.open(provider.archiveUrl(url), '_blank');
+          addToHistory(url, 'archive', selectedProvider);
+          opened++;
+          await new Promise(r => setTimeout(r, settings.rateLimit || 500));
+        }
+        
+        resultsDiv.innerHTML = '<div class="success">Opened ' + opened + ' archive pages!</div>';
+      }
+    }
+    
+    function clearResults() {
+      document.getElementById('urls').value = '';
+      document.getElementById('archive-results').innerHTML = '';
+    }
+    
+    // ============ CRAWL ============
+    async function findLinks() {
+      const url = document.getElementById('crawl-url').value.trim();
+      if (!url) return alert('Enter a URL');
+      
+      // Validate URL
+      try {
+        new URL(url);
+      } catch {
+        return alert('Invalid URL');
+      }
+      
+      const resultsDiv = document.getElementById('crawl-results');
+      resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Finding links...</div>';
+      
+      const baseUrl = new URL(url);
+      const includeExternal = document.getElementById('include-external').checked;
+      const skipTopSites = document.getElementById('skip-top-sites')?.checked ?? true;
+      
+      // Always add the base URL first
+      const links = new Map();
+      links.set(normalizeUrl(url), { url: url, internal: true, status: 'unknown' });
+      
+      if (crawlDepth > 1) {
+        // Try Wayback CDX API with proper parameters
+        try {
+          const domain = baseUrl.hostname;
+          const res = await fetch(
+            `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(domain + '/*')}&output=json&fl=original&filter=statuscode:200&limit=300`
+          );
+          const data = await res.json();
+          
+          if (data && data.length > 1) {
+            for (let i = 1; i < data.length; i++) {
+              const originalUrl = data[i][0];
+              if (originalUrl && isValidUrl(originalUrl)) {
+                const normalized = normalizeUrl(originalUrl);
+                const linkUrl = new URL(normalized);
+                const isInternal = linkUrl.hostname === baseUrl.hostname;
+                
+                if ((isInternal || includeExternal) && !normalized.match(/\.(jpg|png|gif|css|js|woff|svg|pdf|zip)$/i) && !(skipTopSites && shouldSkipDomain(normalized))) {
+                  if (!links.has(normalized)) {
+                    links.set(normalized, { url: normalized, internal: isInternal, status: 'unknown' });
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Wayback CDX error:', e);
+        }
+        
+        // If we got limited results, try page extraction
+        if (links.size < 5) {
+          try {
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            const res = await fetch(proxyUrl);
+            const data = await res.json();
+            
+            if (data.contents) {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(data.contents, 'text/html');
+              const anchors = doc.querySelectorAll('a[href]');
+              
+              for (const anchor of anchors) {
+                try {
+                  const href = anchor.getAttribute('href');
+                  if (!href) continue;
+                  
+                  let fullUrl;
+                  try {
+                    fullUrl = new URL(href, baseUrl).href;
+                  } catch { continue; }
+                  
+                  if (!fullUrl.startsWith('http') || fullUrl.match(/\.(jpg|png|gif|css|js|woff|svg|pdf|zip)$/i)) continue;
+                  
+                  const normalized = normalizeUrl(fullUrl);
+                  const linkUrl = new URL(normalized);
+                  const isInternal = linkUrl.hostname === baseUrl.hostname;
+                  
+                  if ((isInternal || includeExternal) && !links.has(normalized) && !(skipTopSites && shouldSkipDomain(normalized))) {
+                    links.set(normalized, { url: normalized, internal: isInternal, status: 'unknown' });
+                  }
+                } catch {}
+              }
+            }
+          } catch (e) {
+            console.error('Page extraction error:', e);
+          }
+        }
+      }
+      
+      crawlLinks = Array.from(links.values()).slice(0, 100);
+      renderCrawlTable();
+      
+      // Auto check if enabled
+      if (settings.autoCheck) {
+        setTimeout(() => checkAllStatus(), 500);
+      }
+    }
+    
+    // Helper functions
+    function isValidUrl(str) {
+      try {
+        const u = new URL(str);
+        return u.protocol === 'http:' || u.protocol === 'https:';
+      } catch { return false; }
+    }
+    
+    function normalizeUrl(url) {
+      try {
+        const u = new URL(url);
+        u.hash = '';
+        if ((u.protocol === 'http:' && u.port === '80') || (u.protocol === 'https:' && u.port === '443')) {
+          u.port = '';
+        }
+        return u.href.replace(/\/$/, '');
+      } catch { return url; }
+    }
+    
+    function renderCrawlTable() {
+      const resultsDiv = document.getElementById('crawl-results');
+      const statsDiv = document.getElementById('crawl-stats');
+      const actionBar = document.getElementById('crawl-action-bar');
+      
+      const internal = crawlLinks.filter(l => l.internal).length;
+      const external = crawlLinks.filter(l => !l.internal).length;
+      const archived = crawlLinks.filter(l => l.status === 'archived').length;
+      
+      statsDiv.classList.remove('hidden');
+      statsDiv.innerHTML = `
+        <div class="stat"><div class="stat-num">${crawlLinks.length}</div><div class="stat-label">Total Links</div></div>
+        <div class="stat"><div class="stat-num">${internal}</div><div class="stat-label">Internal</div></div>
+        <div class="stat"><div class="stat-num">${external}</div><div class="stat-label">External</div></div>
+        <div class="stat"><div class="stat-num">${archived}</div><div class="stat-label">Archived</div></div>
+      `;
+      
+      if (crawlLinks.length === 0) {
+        resultsDiv.innerHTML = '<div class="summary">No links found. Try a different URL.</div>';
+        actionBar.classList.add('hidden');
+        return;
+      }
+      
+      let html = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th class="checkbox-cell"><input type="checkbox" class="checkbox" onchange="toggleAll(this)"></th>
+                <th>URL</th>
+                <th>Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      for (const link of crawlLinks) {
+        const statusClass = link.status === 'archived' ? 'status-archived' : (link.status === 'checking' ? 'status-checking' : 'status-not-archived');
+        const statusText = link.status === 'archived' ? 'Archived' : (link.status === 'checking' ? 'Checking...' : 'Not archived');
+        const typeClass = link.internal ? 'link-internal' : 'link-external';
+        const typeText = link.internal ? 'Internal' : 'External';
+        
+        html += `
+          <tr>
+            <td class="checkbox-cell"><input type="checkbox" class="checkbox link-checkbox" data-url="${encodeURIComponent(link.url)}"></td>
+            <td class="url-cell">${link.url.substring(0, 80)}${link.url.length > 80 ? '...' : ''}</td>
+            <td><span class="${typeClass}">${typeText}</span></td>
+            <td><span class="status-indicator ${statusClass}"></span>${statusText}</td>
+          </tr>
+        `;
+      }
+      
+      html += '</tbody></table></div>';
+      resultsDiv.innerHTML = html;
+      actionBar.classList.remove('hidden');
+    }
+    
+    function toggleAll(source) {
+      document.querySelectorAll('.link-checkbox').forEach(cb => cb.checked = source.checked);
+    }
+    
+    async function checkAllStatus() {
+      const provider = providers[selectedProvider];
+      
+      // Show checking state
+      crawlLinks.forEach(l => l.status = 'checking');
+      renderCrawlTable();
+      
+      for (let i = 0; i < crawlLinks.length; i++) {
+        const link = crawlLinks[i];
+        link.status = 'checking';
+        
+        // Update single row
+        const checkboxes = document.querySelectorAll('.link-checkbox');
+        if (checkboxes[i]) {
+          const row = checkboxes[i].closest('tr');
+          row.querySelector('.status-indicator').className = 'status-indicator status-checking';
+          row.querySelector('td:last-child').innerHTML = '<span class="status-indicator status-checking"></span>Checking...';
+        }
+        
+        const archivedUrl = await provider.checkArchived(link.url);
+        link.status = archivedUrl ? 'archived' : 'not-archived';
+        link.archivedUrl = archivedUrl;
+        
+        // Update row
+        if (checkboxes[i]) {
+          const row = checkboxes[i].closest('tr');
+          const statusClass = archivedUrl ? 'status-archived' : 'status-not-archived';
+          const statusText = archivedUrl ? 'Archived' : 'Not archived';
+          row.querySelector('.status-indicator').className = 'status-indicator ' + statusClass;
+          row.querySelector('td:last-child').innerHTML = '<span class="status-indicator ' + statusClass + '"></span>' + statusText;
+        }
+        
+        await new Promise(r => setTimeout(r, 100)); // Rate limit
+      }
+      
+      // Update stats
+      const archived = crawlLinks.filter(l => l.status === 'archived').length;
+      const statsDiv = document.getElementById('crawl-stats-inner');
+      statsDiv.innerHTML = `
+        <div class="stat"><div class="stat-num">${crawlLinks.length}</div><div class="stat-label">Total</div></div>
+        <div class="stat"><div class="stat-num">${archived}</div><div class="stat-label">Archived</div></div>
+        <div class="stat"><div class="stat-num">${crawlLinks.length - archived}</div><div class="stat-label">Need Archive</div></div>
+      `;
+    }
+    
+    async function archiveAll() {
+      const provider = providers[selectedProvider];
+      const useBackground = settings.backgroundMode && provider.backgroundArchive;
+      const rate = settings.rateLimit || 500;
+      
+      if (useBackground) {
+        document.getElementById('crawl-results').innerHTML = '<div class="loading"><div class="spinner"></div>Archiving...</div>';
+        
+        let success = 0;
+        for (const link of crawlLinks) {
+          const result = await provider.backgroundArchive(link.url);
+          if (result.success) {
+            success++;
+            addToHistory(link.url, 'archive', selectedProvider);
+          }
+          await new Promise(r => setTimeout(r, rate));
+        }
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Archived ' + success + ' URLs!</div>';
+      } else {
+        crawlLinks.forEach((link, i) => {
+          setTimeout(() => {
+            window.open(provider.archiveUrl(link.url), '_blank');
+            addToHistory(link.url, 'archive', selectedProvider);
+          }, i * rate);
+        });
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + crawlLinks.length + ' archive pages!</div>';
+      }
+    }
+    
+    async function archiveUnarchived() {
+      const unarchived = crawlLinks.filter(l => l.status !== 'archived');
+      const provider = providers[selectedProvider];
+      const useBackground = settings.backgroundMode && provider.backgroundArchive;
+      const rate = settings.rateLimit || 500;
+      
+      if (useBackground) {
+        document.getElementById('crawl-results').innerHTML = '<div class="loading"><div class="spinner"></div>Archiving...</div>';
+        
+        let success = 0;
+        for (const link of unarchived) {
+          const result = await provider.backgroundArchive(link.url);
+          if (result.success) {
+            success++;
+            addToHistory(link.url, 'archive', selectedProvider);
+          }
+          await new Promise(r => setTimeout(r, rate));
+        }
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Archived ' + success + ' URLs!</div>';
+      } else {
+        unarchived.forEach((link, i) => {
+          setTimeout(() => {
+            window.open(provider.archiveUrl(link.url), '_blank');
+            addToHistory(link.url, 'archive', selectedProvider);
+          }, i * rate);
+        });
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + unarchived.length + ' archive pages!</div>';
+      }
+    }
+    
+    async function archiveSelected() {
+      const checkboxes = document.querySelectorAll('.link-checkbox:checked');
+      const selected = Array.from(checkboxes).map(cb => decodeURIComponent(cb.dataset.url));
+      
+      if (selected.length === 0) return alert('Select links to archive');
+      
+      const provider = providers[selectedProvider];
+      const useBackground = settings.backgroundMode && provider.backgroundArchive;
+      const rate = settings.rateLimit || 500;
+      
+      if (useBackground) {
+        document.getElementById('crawl-results').innerHTML = '<div class="loading"><div class="spinner"></div>Archiving...</div>';
+        
+        let success = 0;
+        for (const url of selected) {
+          const result = await provider.backgroundArchive(url);
+          if (result.success) {
+            success++;
+            addToHistory(url, 'archive', selectedProvider);
+          }
+          await new Promise(r => setTimeout(r, rate));
+        }
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Archived ' + success + ' URLs!</div>';
+      } else {
+        selected.forEach((url, i) => {
+          setTimeout(() => {
+            window.open(provider.archiveUrl(url), '_blank');
+            addToHistory(url, 'archive', selectedProvider);
+          }, i * rate);
+        });
+        
+        document.getElementById('crawl-results').innerHTML = '<div class="success">Opened ' + selected.length + ' archive pages!</div>';
+      }
+    }
+    
+    // ============ HISTORY ============
+    function addToHistory(url, action, provider) {
+      const history = JSON.parse(localStorage.getItem('webark-history') || '[]');
+      history.unshift({
+        url,
+        action,
+        provider,
+        timestamp: new Date().toISOString()
+      });
+      // Keep last 100
+      localStorage.setItem('webark-history', JSON.stringify(history.slice(0, 100)));
+    }
+    
+    async function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('webark-history') || '[]');
+      const listDiv = document.getElementById('history-list');
+      
+      // Get local archives
+      const localArchives = await getLocalArchives();
+      
+      let html = '';
+      
+      // Local archives section
+      if (localArchives.length > 0) {
+        html += '<h2 style="margin-top:0;">📱 Local Archives</h2>';
+        for (const archive of localArchives) {
+          const date = new Date(archive.archivedAt);
+          const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const sizeStr = formatSize(archive.size);
+          
+          html += `
+            <div class="history-item">
+              <div class="history-url">${archive.title || archive.url}</div>
+              <div class="history-meta">
+                <span class="badge badge-success">📱 Local</span>
+                ${timeStr} • ${sizeStr}
+                <button class="btn btn-small btn-secondary" onclick="viewLocalArchive('${encodeURIComponent(archive.url)}')">View</button>
+                <button class="btn btn-small btn-danger" onclick="deleteLocal('${encodeURIComponent(archive.url)}')">Delete</button>
+              </div>
+            </div>
+          `;
+        }
+      }
+      
+      // History section
+      if (history.length > 0) {
+        html += '<h2 style="margin-top:20px;">📜 History</h2>';
+        for (const item of history) {
+          const date = new Date(item.timestamp);
+          const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          html += `
+            <div class="history-item">
+              <div class="history-url">${item.url}</div>
+              <div class="history-meta">
+                <span class="badge badge-success">${item.action}</span>
+                via ${providers[item.provider]?.name || item.provider} • ${timeStr}
+              </div>
+            </div>
+          `;
+        }
+      }
+      
+      if (!html) {
+        html = '<div class="summary">No history yet. Start archiving!</div>';
+      }
+      
+      listDiv.innerHTML = html;
+    }
+    
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    
+    function viewLocalArchive(url) {
+      url = decodeURIComponent(url);
+      getLocalArchives().then(archives => {
+        const archive = archives.find(a => a.url === url);
+        if (archive) {
+          // Open in new window
+          const win = window.open('', '_blank');
+          win.document.write(archive.html);
+          win.document.close();
+        }
+      });
+    }
+    
+    async function deleteLocal(url) {
+      url = decodeURIComponent(url);
+      if (confirm('Delete this local archive?')) {
+        await deleteLocalArchive(url);
+        loadHistory();
+      }
+    }
+    
+    function clearHistory() {
+      if (confirm('Clear all history?')) {
+        localStorage.removeItem('webark-history');
+        loadHistory();
+      }
+    }
+    
+    // ============ SERVICE WORKER ============
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+    
+    init();
+  </script>
+</body>
+</html>
