@@ -146,6 +146,7 @@
         <button class="provider-btn" data-provider="archivevn">ArchiveVN</button>
         <button class="provider-btn" data-provider="textise">Textise</button>
         <button class="provider-btn" data-provider="memento">Memento</button>
+        <button class="provider-btn" data-provider="local">📱 Local</button>
       </div>
       <div class="btn-group">
         <button class="btn" onclick="archive()">Archive URLs</button>
@@ -182,6 +183,7 @@
         <button class="provider-btn" data-provider="archivevn">ArchiveVN</button>
         <button class="provider-btn" data-provider="textise">Textise</button>
         <button class="provider-btn" data-provider="memento">Memento</button>
+        <button class="provider-btn" data-provider="local">📱 Local</button>
       </div>
       
       <div class="btn-group">
@@ -228,6 +230,7 @@
             <option value="archivevn">ArchiveVN</option>
             <option value="textise">Textise</option>
             <option value="memento">Memento</option>
+            <option value="local">📱 Local</option>
           </select>
         </div>
         
@@ -476,8 +479,164 @@
             return null;
           } catch { return null; }
         }
+      },
+      local: {
+        name: '📱 Local',
+        archiveUrl: (u) => `javascript:alert('View in History tab')`,
+        backgroundArchive: async (url) => {
+          return await archiveLocally(url);
+        },
+        checkArchived: async (url) => {
+          return await checkLocalArchive(url);
+        }
       }
     };
+    
+    // ============ LOCAL ARCHIVE ============
+    const DB_NAME = 'webark-archives';
+    const STORE_NAME = 'archives';
+    
+    async function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME, { keyPath: 'url' });
+          }
+        };
+      });
+    }
+    
+    async function archiveLocally(url) {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        
+        // Fetch the page
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
+        const data = await res.json();
+        
+        if (!data.contents) {
+          return { success: false, error: 'Failed to fetch page' };
+        }
+        
+        // Parse and inline resources
+        let html = data.contents;
+        
+        // Extract base URL for relative links
+        const baseUrl = new URL(url);
+        
+        // Inline images (convert to data URLs where possible - limited)
+        // For now, just store the HTML with adjusted links
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Update links to be absolute
+        doc.querySelectorAll('a[href]').forEach(a => {
+          try {
+            a.href = new URL(a.getAttribute('href'), baseUrl).href;
+          } catch {}
+        });
+        
+        // Update images to use absolute URLs (can't inline easily without CORS)
+        doc.querySelectorAll('img[src]').forEach(img => {
+          try {
+            img.src = new URL(img.getAttribute('src'), baseUrl).href;
+          } catch {}
+        });
+        
+        // Get final HTML
+        html = '<!DOCTYPE html>\n<html>\n<head>\n';
+        html += `<meta charset="utf-8">\n`;
+        html += `<meta name="webark-original-url" content="${url}">\n`;
+        html += `<meta name="webark-archived-at" content="${new Date().toISOString()}">\n`;
+        html += '</head>\n<body>\n';
+        html += `<!-- Original URL: ${url} -->\n`;
+        html += `<!-- Archived: ${new Date().toISOString()} -->\n`;
+        html += doc.body.innerHTML;
+        html += '\n</body>\n</html>';
+        
+        // Save to IndexedDB
+        const archiveData = {
+          url: url,
+          archivedUrl: url,
+          html: html,
+          title: doc.title || url,
+          archivedAt: new Date().toISOString(),
+          size: html.length
+        };
+        
+        store.put(archiveData);
+        
+        await new Promise((resolve, reject) => {
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+        
+        return { success: true, archivedUrl: '📱 Saved to local storage' };
+      } catch (e) {
+        return { success: false, error: e.message };
+      }
+    }
+    
+    async function checkLocalArchive(url) {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        
+        return new Promise((resolve) => {
+          const request = store.get(url);
+          request.onsuccess = () => {
+            if (request.result) {
+              resolve(url + ' (local)'); // Return URL if archived
+            } else {
+              resolve(null);
+            }
+          };
+          request.onerror = () => resolve(null);
+        });
+      } catch {
+        return null;
+      }
+    }
+    
+    async function getLocalArchives() {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        
+        return new Promise((resolve) => {
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result || []);
+          request.onerror = () => resolve([]);
+        });
+      } catch {
+        return [];
+      }
+    }
+    
+    async function deleteLocalArchive(url) {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.delete(url);
+        
+        await new Promise((resolve) => {
+          tx.oncomplete = resolve;
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    }
     
     // ============ STATE ============
     let selectedProvider = 'wayback';
@@ -954,32 +1113,88 @@
       localStorage.setItem('webark-history', JSON.stringify(history.slice(0, 100)));
     }
     
-    function loadHistory() {
+    async function loadHistory() {
       const history = JSON.parse(localStorage.getItem('webark-history') || '[]');
       const listDiv = document.getElementById('history-list');
       
-      if (history.length === 0) {
-        listDiv.innerHTML = '<div class="summary">No history yet. Start archiving!</div>';
-        return;
-      }
+      // Get local archives
+      const localArchives = await getLocalArchives();
       
       let html = '';
-      for (const item of history) {
-        const date = new Date(item.timestamp);
-        const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        html += `
-          <div class="history-item">
-            <div class="history-url">${item.url}</div>
-            <div class="history-meta">
-              <span class="badge badge-success">${item.action}</span>
-              via ${providers[item.provider]?.name || item.provider} • ${timeStr}
+      
+      // Local archives section
+      if (localArchives.length > 0) {
+        html += '<h2 style="margin-top:0;">📱 Local Archives</h2>';
+        for (const archive of localArchives) {
+          const date = new Date(archive.archivedAt);
+          const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const sizeStr = formatSize(archive.size);
+          
+          html += `
+            <div class="history-item">
+              <div class="history-url">${archive.title || archive.url}</div>
+              <div class="history-meta">
+                <span class="badge badge-success">📱 Local</span>
+                ${timeStr} • ${sizeStr}
+                <button class="btn btn-small btn-secondary" onclick="viewLocalArchive('${encodeURIComponent(archive.url)}')">View</button>
+                <button class="btn btn-small btn-danger" onclick="deleteLocal('${encodeURIComponent(archive.url)}')">Delete</button>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        }
+      }
+      
+      // History section
+      if (history.length > 0) {
+        html += '<h2 style="margin-top:20px;">📜 History</h2>';
+        for (const item of history) {
+          const date = new Date(item.timestamp);
+          const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          html += `
+            <div class="history-item">
+              <div class="history-url">${item.url}</div>
+              <div class="history-meta">
+                <span class="badge badge-success">${item.action}</span>
+                via ${providers[item.provider]?.name || item.provider} • ${timeStr}
+              </div>
+            </div>
+          `;
+        }
+      }
+      
+      if (!html) {
+        html = '<div class="summary">No history yet. Start archiving!</div>';
       }
       
       listDiv.innerHTML = html;
+    }
+    
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    
+    function viewLocalArchive(url) {
+      url = decodeURIComponent(url);
+      getLocalArchives().then(archives => {
+        const archive = archives.find(a => a.url === url);
+        if (archive) {
+          // Open in new window
+          const win = window.open('', '_blank');
+          win.document.write(archive.html);
+          win.document.close();
+        }
+      });
+    }
+    
+    async function deleteLocal(url) {
+      url = decodeURIComponent(url);
+      if (confirm('Delete this local archive?')) {
+        await deleteLocalArchive(url);
+        loadHistory();
+      }
     }
     
     function clearHistory() {
