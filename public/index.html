@@ -304,6 +304,7 @@
       </div>
       
       <div class="btn-group" style="margin-top:20px;">
+        <button class="btn" onclick="saveSettings()">Save Settings</button>
         <button class="btn btn-danger" onclick="resetSettings()">Reset to Defaults</button>
       </div>
     </div>
@@ -559,6 +560,16 @@
         rateLimit: parseInt(document.getElementById('setting-rate').value)
       };
       localStorage.setItem('webark-settings', JSON.stringify(settings));
+      
+      // Show success message
+      const btn = document.querySelector('#tab-settings .btn:not(.btn-danger)');
+      const originalText = btn.textContent;
+      btn.textContent = '✓ Saved!';
+      btn.style.background = '#238636';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '';
+      }, 1500);
     }
     
     function changeLanguage(lang) {
